@@ -5,7 +5,7 @@ const STATUS_CONFIG: Record<SectionMatchStatus, { bg: string; text: string; labe
   matched: {
     bg: "rgba(34, 197, 94, 0.1)",
     text: "#166534",
-    label: "Matched Sections",
+    label: "MATCHED SECTION",
     indicator: "var(--color-added)",
   },
   missing_in_base: {
@@ -137,7 +137,7 @@ export const SectionSelector = ({
                     color: coverage.text,
                   }}
                 >
-                  {section.coverage.percent.toFixed(0)}% Coverage
+                  {section.coverage.percent.toFixed(0)}% COVERAGE
                 </span>
               </div>
 

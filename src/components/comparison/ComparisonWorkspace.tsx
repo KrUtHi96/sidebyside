@@ -457,8 +457,9 @@ export const ComparisonWorkspace = () => {
         <div 
           className="fixed bottom-5 left-1/2 flex -translate-x-1/2 gap-5 rounded-lg px-4 py-2.5 text-xs shadow-md"
           style={{ 
-            background: 'white',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            background: "rgba(0, 0, 0, 0.65)",
+            border: "1px solid rgba(255, 255, 255, 0.18)",
+            boxShadow: "0 10px 26px rgba(0,0,0,0.35)"
           }}
         >
           <div className="flex items-center gap-2">
@@ -466,14 +467,14 @@ export const ComparisonWorkspace = () => {
               className="h-3 w-3 rounded-sm" 
               style={{ background: 'var(--color-added)' }}
             />
-            <span style={{ color: 'var(--color-text-secondary)' }}>Added</span>
+            <span style={{ color: 'rgba(255,255,255,0.94)' }}>Added</span>
           </div>
           <div className="flex items-center gap-2">
             <span 
               className="h-3 w-3 rounded-sm" 
               style={{ background: 'var(--color-removed)' }}
             />
-            <span style={{ color: 'var(--color-text-secondary)' }}>Removed</span>
+            <span style={{ color: 'rgba(255,255,255,0.94)' }}>Removed</span>
           </div>
         </div>
       )}
