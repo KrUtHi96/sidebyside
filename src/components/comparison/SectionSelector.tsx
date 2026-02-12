@@ -1,28 +1,35 @@
 import clsx from "clsx";
 import type { SectionComparison, SectionMatchStatus } from "@/types/comparison";
 
-const STATUS_CLASS: Record<SectionMatchStatus, string> = {
-  matched: "bg-emerald-100 text-emerald-800",
-  missing_in_base: "bg-amber-100 text-amber-800",
-  missing_in_compared: "bg-rose-100 text-rose-800",
+const STATUS_CONFIG: Record<SectionMatchStatus, { bg: string; text: string; label: string; indicator: string }> = {
+  matched: {
+    bg: "rgba(34, 197, 94, 0.1)",
+    text: "#166534",
+    label: "matched",
+    indicator: "var(--color-added)",
+  },
+  missing_in_base: {
+    bg: "rgba(245, 158, 11, 0.1)",
+    text: "#92400e",
+    label: "missing in base",
+    indicator: "var(--color-changed)",
+  },
+  missing_in_compared: {
+    bg: "rgba(239, 68, 68, 0.1)",
+    text: "#991b1b",
+    label: "missing in compared",
+    indicator: "var(--color-removed)",
+  },
 };
 
-const STATUS_LABEL: Record<SectionMatchStatus, string> = {
-  matched: "matched",
-  missing_in_base: "missing in base",
-  missing_in_compared: "missing in compared",
-};
-
-const coverageClass = (percent: number): string => {
+const coverageConfig = (percent: number): { bg: string; text: string } => {
   if (percent >= 99.9) {
-    return "bg-emerald-100 text-emerald-800";
+    return { bg: "rgba(34, 197, 94, 0.1)", text: "#166534" };
   }
-
   if (percent >= 95) {
-    return "bg-amber-100 text-amber-800";
+    return { bg: "rgba(245, 158, 11, 0.1)", text: "#92400e" };
   }
-
-  return "bg-rose-100 text-rose-800";
+  return { bg: "rgba(239, 68, 68, 0.1)", text: "#991b1b" };
 };
 
 const shortLabel = (value: string): string => {
@@ -30,7 +37,6 @@ const shortLabel = (value: string): string => {
   if (words.length === 1) {
     return words[0].slice(0, 3).toUpperCase();
   }
-
   return words.slice(0, 2).map((word) => word[0]?.toUpperCase() ?? "").join("");
 };
 
@@ -47,9 +53,10 @@ export const SectionSelector = ({
 }) => {
   if (compact) {
     return (
-      <div className="space-y-2 p-2">
+      <div className="flex flex-col gap-1 p-2">
         {sections.map((section) => {
           const selected = section.header === selectedHeader;
+          const status = STATUS_CONFIG[section.status];
           return (
             <button
               key={`section-compact-${section.header}`}
@@ -57,13 +64,21 @@ export const SectionSelector = ({
               title={section.header}
               onClick={() => onSelect(section.header)}
               className={clsx(
-                "mx-auto flex h-9 w-9 items-center justify-center rounded-md border text-[11px] font-bold",
+                "relative mx-auto flex h-9 w-9 items-center justify-center rounded-md text-[11px] font-semibold transition",
                 selected
-                  ? "border-teal-500 bg-teal-100 text-teal-800"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                  ? "text-white"
+                  : "text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-secondary)]"
               )}
+              style={{
+                background: selected ? "var(--color-primary)" : "transparent",
+              }}
             >
               {shortLabel(section.header)}
+              {/* Change indicator dot */}
+              <span 
+                className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full"
+                style={{ background: status.indicator }}
+              />
             </button>
           );
         })}
@@ -72,53 +87,67 @@ export const SectionSelector = ({
   }
 
   return (
-    <div className="h-full overflow-y-auto p-3">
-      <ul className="space-y-2">
+    <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex flex-col gap-1">
         {sections.map((section) => {
           const selected = section.header === selectedHeader;
+          const status = STATUS_CONFIG[section.status];
+          const coverage = coverageConfig(section.coverage.percent);
 
           return (
-            <li key={`section-${section.header}`}>
-              <button
-                type="button"
-                onClick={() => onSelect(section.header)}
-                className={clsx(
-                  "w-full rounded-xl border p-3 text-left transition",
-                  selected
-                    ? "border-teal-500 bg-teal-50 shadow-[0_2px_6px_rgba(13,148,136,0.18)]"
-                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-semibold text-slate-900">{section.header}</p>
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className={clsx(
-                        "rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase",
-                        STATUS_CLASS[section.status],
-                      )}
-                    >
-                      {STATUS_LABEL[section.status]}
-                    </span>
-                    <span
-                      className={clsx(
-                        "rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase",
-                        coverageClass(section.coverage.percent),
-                      )}
-                    >
-                      Coverage {section.coverage.percent.toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-
-                <p className="mt-1 text-xs text-slate-500">
-                  {section.startParagraph ?? "-"} to {section.endParagraph ?? "-"} • {section.rows.length} clauses
+            <button
+              key={`section-${section.header}`}
+              type="button"
+              onClick={() => onSelect(section.header)}
+              className={clsx(
+                "w-full rounded-md border p-3 text-left transition",
+                selected
+                  ? "border-[var(--color-primary)]"
+                  : "border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]"
+              )}
+              style={{
+                background: selected ? "var(--color-primary-subtle)" : "transparent",
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p 
+                  className="text-sm font-medium"
+                  style={{ 
+                    color: selected ? "var(--color-primary)" : "var(--color-text-primary)" 
+                  }}
+                >
+                  {section.header}
                 </p>
-              </button>
-            </li>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span
+                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                  style={{
+                    background: status.bg,
+                    color: status.text,
+                  }}
+                >
+                  {status.label}
+                </span>
+                <span
+                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                  style={{
+                    background: coverage.bg,
+                    color: coverage.text,
+                  }}
+                >
+                  {section.coverage.percent.toFixed(0)}%
+                </span>
+              </div>
+
+              <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                {section.startParagraph ?? "-"} to {section.endParagraph ?? "-"} • {section.rows.length} clauses
+              </p>
+            </button>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 };

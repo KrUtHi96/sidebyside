@@ -1,10 +1,55 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f3f4f6;
-  --foreground: #0f172a;
+  /* Primary Colors */
+  --color-primary: #667eea;
+  --color-primary-hover: #5a6fd6;
+  --color-primary-subtle: rgba(102, 126, 234, 0.08);
+  
+  /* Diff State Colors - Added (Green) */
+  --color-added: #22c55e;
+  --color-added-bg: #dcfce7;
+  --color-added-text: #166534;
+  --color-added-subtle: rgba(34, 197, 94, 0.08);
+  
+  /* Diff State Colors - Removed (Red) */
+  --color-removed: #ef4444;
+  --color-removed-bg: #fee2e2;
+  --color-removed-text: #991b1b;
+  --color-removed-subtle: rgba(239, 68, 68, 0.08);
+  
+  /* Diff State Colors - Changed (Amber) */
+  --color-changed: #f59e0b;
+  --color-changed-bg: #fef3c7;
+  --color-changed-text: #92400e;
+  --color-changed-subtle: rgba(245, 158, 11, 0.08);
+  
+  /* Neutral Colors - Background */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-tertiary: #f3f4f6;
+  
+  /* Neutral Colors - Borders */
+  --color-border: #e0e0e0;
+  --color-border-light: #e5e5e5;
+  
+  /* Neutral Colors - Text */
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #374151;
+  --color-text-tertiary: #6b7280;
+  --color-text-muted: #9ca3af;
+  
+  /* Legacy variables for compatibility */
+  --background: #f5f5f5;
+  --foreground: #1a1a1a;
   --surface: #ffffff;
-  --accent: #0f766e;
+  --accent: #667eea;
+  
+  /* Layout */
+  --header-height: 56px;
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 48px;
+  --panel-header-height: 48px;
 }
 
 @theme inline {
@@ -17,22 +62,61 @@
   box-sizing: border-box;
 }
 
-body {
-  min-height: 100vh;
-  margin: 0;
-  color: var(--foreground);
-  font-family: var(--font-body), "Source Sans 3", sans-serif;
-  background:
-    radial-gradient(circle at 16% 12%, rgba(14, 116, 144, 0.1) 0, transparent 30%),
-    radial-gradient(circle at 84% 18%, rgba(15, 118, 110, 0.14) 0, transparent 34%),
-    linear-gradient(180deg, #eff6ff 0%, #f8fafc 28%, #f3f4f6 100%);
+html {
+  height: 100%;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-display), "Lora", serif;
+body {
+  min-height: 100vh;
+  height: 100%;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-bg-secondary);
+  overflow: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus states */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Selection styling */
+::selection {
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
 }

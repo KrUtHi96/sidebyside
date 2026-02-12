@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SideBySide - Focus Mode</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; height: 100vh; overflow: hidden; color: #e5e5e5; }
+    
+    /* Floating Header */
+    .floating-header { position: fixed; top: 0; left: 0; right: 0; height: 64px; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; padding: 0 24px; z-index: 100; }
+    .logo { font-weight: 700; font-size: 18px; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    
+    /* Quick Actions */
+    .quick-actions { display: flex; gap: 8px; margin-left: auto; }
+    .action-btn { width: 36px; height: 36px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #999; transition: all 0.2s; }
+    .action-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .action-btn.active { background: #667eea; color: #fff; border-color: #667eea; }
+    
+    /* Main Content - Immersive */
+    .main-content { height: 100vh; padding-top: 64px; display: flex; }
+    
+    /* Side Navigation Drawer */
+    .nav-drawer { width: 64px; background: rgba(255,255,255,0.02); border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 8px; transition: width 0.3s ease; overflow: hidden; }
+    .nav-drawer.expanded { width: 300px; align-items: stretch; padding: 16px; }
+    .nav-toggle { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); background: transparent; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #999; margin-bottom: 8px; }
+    .nav-drawer.expanded .nav-toggle { align-self: flex-end; }
+    
+    /* Section Pills (Collapsed) */
+    .section-pills { display: flex; flex-direction: column; gap: 8px; }
+    .nav-drawer.expanded .section-pills { display: none; }
+    .section-pill { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; position: relative; }
+    .section-pill:hover { background: rgba(255,255,255,0.1); }
+    .section-pill.active { background: #667eea; color: #fff; }
+    .section-pill.changed::after { content: ''; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; }
+    .section-pill.added::after { background: #22c55e; }
+    .section-pill.removed::after { background: #ef4444; }
+    
+    /* Section List (Expanded) */
+    .section-list { display: none; flex-direction: column; gap: 4px; margin-top: 8px; }
+    .nav-drawer.expanded .section-list { display: flex; }
+    .section-list-title { font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; padding: 0 8px; }
+    .section-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+    .section-item:hover { background: rgba(255,255,255,0.05); }
+    .section-item.active { background: rgba(102, 126, 234, 0.2); color: #667eea; }
+    .section-num { font-family: monospace; font-size: 11px; color: #666; min-width: 28px; }
+    .section-item.active .section-num { color: #667eea; }
+    .section-badge { width: 6px; height: 6px; border-radius: 50%; margin-left: auto; }
+    .section-badge.added { background: #22c55e; }
+    .section-badge.removed { background: #ef4444; }
+    .section-badge.changed { background: #f59e0b; }
+    
+    /* Comparison Area */
+    .comparison-area { flex: 1; display: flex; overflow: hidden; position: relative; }
+    
+    /* Panels */
+    .panel { flex: 1; overflow-y: auto; padding: 40px 48px; }
+    .panel-divider { width: 1px; background: rgba(255,255,255,0.08); }
+    
+    /* Panel Labels - Floating */
+    .panel-label { position: absolute; top: 80px; padding: 8px 16px; background: rgba(30, 30, 30, 0.9); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .panel-label.base { left: 48px; }
+    .panel-label.compared { right: 48px; }
+    .label-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .label-dot.base { background: #6b7280; }
+    .label-dot.compared { background: #667eea; }
+    
+    /* Content Styling */
+    .content-wrapper { max-width: 600px; margin: 0 auto; }
+    .paragraph { margin-bottom: 32px; line-height: 1.8; font-size: 15px; color: #d1d5db; }
+    .paragraph-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .paragraph-num { font-family: monospace; font-size: 12px; color: #667eea; background: rgba(102, 126, 234, 0.15); padding: 4px 10px; border-radius: 6px; font-weight: 600; }
+    .change-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+    .change-badge.added { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .change-badge.removed { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .change-badge.modified { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    
+    .text-removed { color: #ef4444; text-decoration: line-through; text-decoration-thickness: 2px; opacity: 0.7; }
+    .text-added { color: #22c55e; background: rgba(34, 197, 94, 0.15); padding: 2px 4px; border-radius: 3px; }
+    .text-highlight { background: rgba(245, 158, 11, 0.15); padding: 2px 4px; border-radius: 3px; color: #fbbf24; }
+    
+    /* Floating Toolbar */
+    .floating-toolbar { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; padding: 8px; background: rgba(30, 30, 30, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; backdrop-filter: blur(10px); }
+    .toolbar-btn { padding: 10px 16px; border: none; background: transparent; color: #999; font-size: 13px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .toolbar-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .toolbar-btn.active { background: rgba(102, 126, 234, 0.3); color: #667eea; }
+    .toolbar-divider { width: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; }
+    .toolbar-btn.primary { background: #667eea; color: #fff; }
+    .toolbar-btn.primary:hover { background: #5a6fd6; }
+    
+    /* Progress Bar */
+    .progress-bar { position: fixed; top: 64px; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.05); }
+    .progress-fill { height: 100%; width: 35%; background: linear-gradient(90deg, #667eea, #764ba2); }
+    
+    /* Upload Overlay */
+    .upload-overlay { position: fixed; top: 64px; left: 64px; right: 0; height: 60px; background: rgba(20, 20, 20, 0.98); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; padding: 0 32px; gap: 16px; }
+    .file-chip { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 13px; }
+    .file-chip .icon { font-size: 16px; }
+    .vs-badge { padding: 4px 10px; background: rgba(102, 126, 234, 0.2); color: #667eea; border-radius: 12px; font-size: 11px; font-weight: 700; }
+    .swap-btn { margin-left: auto; padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #999; font-size: 12px; cursor: pointer; }
+    .swap-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  </style>
+</head>
+<body>
+  <!-- Floating Header -->
+  <header class="floating-header">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      SideBySide
+    </div>
+    <div class="quick-actions">
+      <button class="action-btn" title="Search">🔍</button>
+      <button class="action-btn active" title="Split View">◫</button>
+      <button class="action-btn" title="Unified View">☰</button>
+      <button class="action-btn" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="progress-fill"></div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Navigation Drawer -->
+    <nav class="nav-drawer" id="navDrawer">
+      <button class="nav-toggle" onclick="toggleNav()">☰</button>
+      
+      <!-- Collapsed View - Pills -->
+      <div class="section-pills">
+        <div class="section-pill active">1</div>
+        <div class="section-pill changed">2</div>
+        <div class="section-pill">3</div>
+        <div class="section-pill changed">4</div>
+        <div class="section-pill added">4.2</div>
+        <div class="section-pill removed">5</div>
+        <div class="section-pill changed">6</div>
+        <div class="section-pill">7</div>
+        <div class="section-pill">8</div>
+      </div>
+      
+      <!-- Expanded View - List -->
+      <div class="section-list">
+        <div class="section-list-title">Document Sections</div>
+        <div class="section-item active">
+          <span class="section-num">1</span>
+          <span>Introduction</span>
+        </div>
+        <div class="section-item">
+          <span class="section-num">2</span>
+          <span>Scope & Application</span>
+          <span class="section-badge changed"></span>
+        </div>
+        <div class="section-item">
+          <span class="section-num">3</span>
+          <span>Definitions</span>
+        </div>
+        <div class="section-item">
+          <span class="section-num">4</span>
+          <span>General Requirements</span>
+          <span class="section-badge changed"></span>
+        </div>
+        <div class="section-item" style="padding-left: 32px;">
+          <span class="section-num">4.1</span>
+          <span>Compliance</span>
+        </div>
+        <div class="section-item" style="padding-left: 32px;">
+          <span class="section-num">4.2</span>
+          <span>New Provision</span>
+          <span class="section-badge added"></span>
+        </div>
+        <div class="section-item" style="padding-left: 32px;">
+          <span class="section-num">4.3</span>
+          <span>Reporting</span>
+        </div>
+        <div class="section-item">
+          <span class="section-num">5</span>
+          <span>Old Section</span>
+          <span class="section-badge removed"></span>
+        </div>
+        <div class="section-item">
+          <span class="section-num">6</span>
+          <span>Financial Disclosures</span>
+          <span class="section-badge changed"></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Comparison Area -->
+    <div class="comparison-area">
+      <!-- Upload Overlay -->
+      <div class="upload-overlay">
+        <div class="file-chip">
+          <span class="icon">📄</span>
+          <span>base-regulation.pdf</span>
+        </div>
+        <span class="vs-badge">VS</span>
+        <div class="file-chip">
+          <span class="icon">📄</span>
+          <span>updated-regulation.pdf</span>
+        </div>
+        <button class="swap-btn">🔄 Swap</button>
+      </div>
+
+      <!-- Panel Labels -->
+      <div class="panel-label base">
+        <span class="label-dot base"></span>
+        Base Document
+      </div>
+      <div class="panel-label compared">
+        <span class="label-dot compared"></span>
+        Compared Document
+      </div>
+
+      <!-- Left Panel -->
+      <div class="panel" style="padding-top: 120px;">
+        <div class="content-wrapper">
+          <div class="paragraph">
+            <div class="paragraph-header">
+              <span class="paragraph-num">4.2</span>
+              <span class="change-badge removed">Removed</span>
+            </div>
+            Organizations must maintain <span class="text-removed">annual</span> records of all transactions and provide them upon request to regulatory authorities. The records must be kept for a minimum period of five years from the date of transaction.
+          </div>
+          <div class="paragraph">
+            <div class="paragraph-header">
+              <span class="paragraph-num">4.3</span>
+            </div>
+            Failure to comply with reporting requirements may result in penalties as outlined in Section 7.
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Right Panel -->
+      <div class="panel" style="padding-top: 120px;">
+        <div class="content-wrapper">
+          <div class="paragraph">
+            <div class="paragraph-header">
+              <span class="paragraph-num">4.2</span>
+              <span class="change-badge added">Added</span>
+            </div>
+            Organizations must maintain <span class="text-added">comprehensive digital and physical</span> records of all transactions and provide them upon request to regulatory authorities. The records must be kept for a minimum period of <span class="text-added">seven</span> <span class="text-removed">five</span> years from the date of transaction.
+          </div>
+          <div class="paragraph">
+            <div class="paragraph-header">
+              <span class="paragraph-num">4.3</span>
+            </div>
+            Failure to comply with reporting requirements may result in penalties as outlined in Section 7.
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Floating Toolbar -->
+  <div class="floating-toolbar">
+    <button class="toolbar-btn active">All</button>
+    <button class="toolbar-btn">Added</button>
+    <button class="toolbar-btn">Removed</button>
+    <button class="toolbar-btn">Modified</button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn">🔍 100%</button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn primary">📥 Export</button>
+  </div>
+
+  <script>
+    function toggleNav() {
+      document.getElementById('navDrawer').classList.toggle('expanded');
+    }
+  </script>
+</body>
+</html>

@@ -196,28 +196,64 @@ export const ComparisonWorkspace = () => {
   }, []);
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[1900px] flex-col gap-4 px-4 py-5 md:px-6">
-      <header className="rounded-2xl border border-slate-200 bg-white/80 p-4 backdrop-blur-sm shadow-[0_5px_20px_rgba(15,23,42,0.08)]">
-        <div className="flex flex-wrap items-center gap-3">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-[var(--color-bg-secondary)]">
+      {/* Header Navigation Bar */}
+      <header 
+        className="flex h-[var(--header-height)] shrink-0 items-center gap-4 border-b border-[var(--color-border)] bg-white px-5"
+        style={{ height: 56 }}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          <div 
+            className="flex h-6 w-6 items-center justify-center rounded-md"
+            style={{ 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+              <rect x="3" y="3" width="8" height="8" rx="1" />
+              <rect x="13" y="3" width="8" height="8" rx="1" />
+              <rect x="3" y="13" width="8" height="8" rx="1" />
+              <rect x="13" y="13" width="8" height="8" rx="1" />
+            </svg>
+          </div>
+          <span className="text-lg font-bold text-[var(--color-text-primary)]">SideBySide</span>
+        </div>
+
+        {/* Divider */}
+        <div className="h-6 w-px bg-[var(--color-border)]" />
+
+        {/* File Upload Area */}
+        <div className="flex flex-1 items-center gap-3">
           <label
             aria-disabled="true"
             title="Default files are preselected; upload is locked."
-            className="flex min-w-[230px] flex-1 cursor-not-allowed items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600 opacity-90"
+            className="flex cursor-not-allowed items-center gap-2 rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-sm text-[var(--color-text-tertiary)] opacity-90"
           >
-            <span className="font-semibold text-slate-900">Base PDF</span>
-            <span className="truncate text-xs text-slate-500">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span className="font-medium text-[var(--color-text-primary)]">Base PDF</span>
+            <span className="truncate max-w-[140px] text-xs">
               {result?.baseFileName ?? "IFRS base document"}
             </span>
             <input className="hidden" type="file" accept="application/pdf" disabled />
           </label>
 
+          <span className="text-sm text-[var(--color-text-muted)]">vs</span>
+
           <label
             aria-disabled="true"
             title="Default files are preselected; upload is locked."
-            className="flex min-w-[230px] flex-1 cursor-not-allowed items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600 opacity-90"
+            className="flex cursor-not-allowed items-center gap-2 rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-sm text-[var(--color-text-tertiary)] opacity-90"
           >
-            <span className="font-semibold text-slate-900">Compared PDF</span>
-            <span className="truncate text-xs text-slate-500">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span className="font-medium text-[var(--color-text-primary)]">Compared PDF</span>
+            <span className="truncate max-w-[140px] text-xs">
               {result?.comparedFileName ?? "AASB compared document"}
             </span>
             <input className="hidden" type="file" accept="application/pdf" disabled />
@@ -227,77 +263,82 @@ export const ComparisonWorkspace = () => {
             type="button"
             disabled
             title="Default files are preselected; manual compare is locked."
-            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="rounded-md px-4 py-1.5 text-sm font-medium text-white transition disabled:cursor-not-allowed"
+            style={{ 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              opacity: 0.5 
+            }}
           >
             Compare
           </button>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex items-center gap-2">
+          <select
+            disabled
+            title="Diff mode is fixed to word in read-only compare mode."
+            className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-sm text-[var(--color-text-tertiary)] disabled:cursor-not-allowed"
+            value="word"
+            onChange={() => undefined}
+          >
+            <option value="word">All Changes</option>
+            <option value="added">Added Only</option>
+            <option value="removed">Removed Only</option>
+            <option value="modified">Modified Only</option>
+          </select>
 
           <button
             type="button"
             onClick={exportPdf}
             disabled={!comparisonId}
-            className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:bg-teal-300"
+            className="flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-secondary)] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Export Full PDF
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export PDF
           </button>
-
-          <select
-            disabled
-            title="Diff mode is fixed to word in read-only compare mode."
-            className="rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-500 disabled:cursor-not-allowed"
-            value="word"
-            onChange={() => undefined}
-          >
-            <option value="word">Word diff (default)</option>
-            <option value="sentence">Sentence diff</option>
-            <option value="paragraph">Paragraph diff</option>
-          </select>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-          <span className="rounded-full bg-cyan-50 px-2 py-1 text-cyan-800">
-            Using fixed default frameworks (read-only compare mode)
-          </span>
-          <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
-            Text dump comparison view
-          </span>
-          <span className="rounded-full bg-rose-50 px-2 py-1 text-rose-700">
-            Removed (A-only) in compared panel
-          </span>
-          <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
-            Added (B-only) in compared panel
-          </span>
-          {result ? (
-            <span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">
-              Expires: {new Date(result.expiresAt).toLocaleTimeString()}
-            </span>
-          ) : null}
-          {error ? <span className="text-rose-700">{error}</span> : null}
         </div>
       </header>
 
-      <section
-        className={clsx(
-          "grid flex-1 grid-cols-1 gap-4",
-          railCollapsed ? "xl:grid-cols-[72px_1fr]" : "xl:grid-cols-[320px_1fr]",
-        )}
-      >
-        <aside className="rounded-2xl border border-slate-200 bg-white shadow-[0_5px_20px_rgba(15,23,42,0.06)]">
-          <div className="flex items-center justify-between border-b border-slate-200 p-2">
-            {!railCollapsed ? (
-              <p className="px-1 text-sm font-semibold text-slate-900">Sections</p>
-            ) : null}
-
+      {/* Main Content Area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Collapsible Sidebar */}
+        <aside 
+          className="flex shrink-0 flex-col border-r border-[var(--color-border)] bg-white transition-all duration-300"
+          style={{ 
+            width: railCollapsed ? 48 : 280 
+          }}
+        >
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between border-b border-[var(--color-border)] p-3">
+            {!railCollapsed && (
+              <span className="text-sm font-semibold text-[var(--color-text-primary)]">Sections</span>
+            )}
             <button
               type="button"
               onClick={() => setRailCollapsed((value) => !value)}
-              className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              title={railCollapsed ? "Expand rail" : "Collapse rail"}
+              className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-bg-secondary)] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-tertiary)]"
+              title={railCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              {railCollapsed ? ">" : "<"}
+              <svg 
+                width="14" 
+                height="14" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+                style={{ transform: railCollapsed ? 'rotate(180deg)' : 'none' }}
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </button>
           </div>
 
+          {/* Section Tree */}
           <SectionSelector
             compact={railCollapsed}
             sections={result?.sections ?? []}
@@ -306,126 +347,184 @@ export const ComparisonWorkspace = () => {
           />
         </aside>
 
-        <section className="grid min-h-[76vh] grid-cols-1 gap-4 xl:grid-cols-2">
+        {/* Comparison Panels */}
+        <main className="flex flex-1 flex-col overflow-hidden">
+          {/* Panel Headers */}
+          <div className="flex h-[var(--panel-header-height)] shrink-0 border-b border-[var(--color-border)] bg-white">
+            <div className="flex flex-1 items-center gap-3 border-r border-[var(--color-border)] px-5">
+              <span 
+                className="rounded px-2.5 py-1 text-xs font-semibold uppercase tracking-wide"
+                style={{ 
+                  background: 'var(--color-bg-tertiary)', 
+                  color: 'var(--color-text-tertiary)' 
+                }}
+              >
+                Base
+              </span>
+              <span className="text-sm font-medium text-[var(--color-text-primary)]">
+                {result?.baseFileName ?? "No file compared yet"}
+              </span>
+            </div>
+            <div className="flex flex-1 items-center gap-3 px-5">
+              <span 
+                className="rounded px-2.5 py-1 text-xs font-semibold uppercase tracking-wide"
+                style={{ 
+                  background: 'rgba(102, 126, 234, 0.15)', 
+                  color: '#667eea' 
+                }}
+              >
+                Compared
+              </span>
+              <span className="text-sm font-medium text-[var(--color-text-primary)]">
+                {result?.comparedFileName ?? "No file compared yet"}
+              </span>
+            </div>
+          </div>
+
+          {/* Coverage Warning */}
           {selectedSection && selectedSection.coverage.percent < 100 ? (
-            <div className="xl:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Coverage warning: {selectedSection.coverage.percent.toFixed(1)}% of lines were mapped in this
-              section. Unmapped text is included as synthetic rows and listed in extraction issues.
+            <div 
+              className="shrink-0 px-5 py-2 text-sm"
+              style={{ 
+                background: 'var(--color-changed-subtle)', 
+                color: 'var(--color-changed-text)' 
+              }}
+            >
+              Coverage warning: {selectedSection.coverage.percent.toFixed(1)}% of lines were mapped in this section. 
+              Unmapped text is included as synthetic rows and listed in extraction issues.
             </div>
           ) : null}
 
-          <article className="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-[0_5px_20px_rgba(15,23,42,0.06)]">
-            <header className="border-b border-slate-200 px-4 py-3">
-              <h2 className="font-semibold text-slate-900">Base Framework</h2>
-              <p className="text-xs text-slate-500">{result?.baseFileName ?? "No file compared yet"}</p>
-              {selectedSection ? (
-                <p className="mt-1 text-xs text-slate-600">
-                  Section: <span className="font-semibold">{selectedSection.header}</span>
-                </p>
-              ) : null}
-            </header>
-
-            <div className="flex-1 overflow-auto p-4">
-              {selectedSection ? (
-                selectedSection.baseSectionTextPreserved ? (
-                  <pre className="text-[15px] leading-7 whitespace-pre-wrap break-words font-serif text-slate-800">
-                    {selectedSection.baseSectionTextPreserved}
-                  </pre>
-                ) : (
-                  <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
-                    This section is missing in the base document.
-                  </div>
-                )
-              ) : (
-                <p className="text-sm text-slate-500">Select a section to compare.</p>
-              )}
-            </div>
-          </article>
-
-          <article className="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-[0_5px_20px_rgba(15,23,42,0.06)]">
-            <header className="border-b border-slate-200 px-4 py-3">
-              <h2 className="font-semibold text-slate-900">Compared Framework</h2>
-              <p className="text-xs text-slate-500">{result?.comparedFileName ?? "No file compared yet"}</p>
-              {selectedSection ? (
-                <p className="mt-1 text-xs text-slate-600">
-                  Section: <span className="font-semibold">{selectedSection.header}</span>
-                </p>
-              ) : null}
-            </header>
-
-            <div className="flex-1 overflow-auto p-4">
-              {selectedSection ? (
-                selectedSection.baseSectionTextPreserved || selectedSection.comparedSectionTextPreserved ? (
-                  <RedlineText tokens={sectionTokens} side="compared" />
-                ) : (
-                  <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
-                    This section is missing in the compared document.
-                  </div>
-                )
-              ) : (
-                <p className="text-sm text-slate-500">Select a section to compare.</p>
-              )}
-            </div>
-          </article>
-        </section>
-      </section>
-
-      {result ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_5px_20px_rgba(15,23,42,0.06)]">
-          <h2 className="mb-2 font-semibold text-slate-900">Unmatched / Unextractable Sections</h2>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div>
-              <p className="mb-1 text-sm font-medium text-slate-700">Base document issues</p>
-              <ul className="space-y-1 text-xs text-slate-600">
-                {result.extractionIssues.base.length === 0 ? (
-                  <li className="text-slate-500">No extraction issues.</li>
-                ) : (
-                  result.extractionIssues.base.map((issue) => (
-                    <li
-                      key={`base-issue-${issue.key}`}
-                      className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1"
+          {/* Split Panels */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Base Panel */}
+            <article className="flex flex-1 flex-col overflow-hidden border-r border-[var(--color-border)] bg-white">
+              <div className="flex-1 overflow-y-auto p-6">
+                {selectedSection ? (
+                  selectedSection.baseSectionTextPreserved ? (
+                    <pre 
+                      className="whitespace-pre-wrap break-words font-sans text-sm leading-7"
+                      style={{ color: 'var(--color-text-secondary)' }}
                     >
-                      p.{issue.pageStart} | {issue.originalLabel} | {issue.text.slice(0, 140)}
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
-            <div>
-              <p className="mb-1 text-sm font-medium text-slate-700">Compared document issues</p>
-              <ul className="space-y-1 text-xs text-slate-600">
-                {result.extractionIssues.compared.length === 0 ? (
-                  <li className="text-slate-500">No extraction issues.</li>
-                ) : (
-                  result.extractionIssues.compared.map((issue) => (
-                    <li
-                      key={`compared-issue-${issue.key}`}
-                      className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1"
+                      {selectedSection.baseSectionTextPreserved}
+                    </pre>
+                  ) : (
+                    <div 
+                      className="rounded-lg border border-dashed p-4 text-sm"
+                      style={{ 
+                        borderColor: 'var(--color-border)', 
+                        background: 'var(--color-bg-secondary)',
+                        color: 'var(--color-text-tertiary)'
+                      }}
                     >
-                      p.{issue.pageStart} | {issue.originalLabel} | {issue.text.slice(0, 140)}
-                    </li>
-                  ))
+                      This section is missing in the base document.
+                    </div>
+                  )
+                ) : (
+                  <p className="text-sm text-[var(--color-text-muted)]">Select a section to compare.</p>
                 )}
-              </ul>
-            </div>
+              </div>
+            </article>
+
+            {/* Compared Panel */}
+            <article className="flex flex-1 flex-col overflow-hidden bg-white">
+              <div className="flex-1 overflow-y-auto p-6">
+                {selectedSection ? (
+                  selectedSection.baseSectionTextPreserved || selectedSection.comparedSectionTextPreserved ? (
+                    <RedlineText tokens={sectionTokens} side="compared" />
+                  ) : (
+                    <div 
+                      className="rounded-lg border border-dashed p-4 text-sm"
+                      style={{ 
+                        borderColor: 'var(--color-border)', 
+                        background: 'var(--color-bg-secondary)',
+                        color: 'var(--color-text-tertiary)'
+                      }}
+                    >
+                      This section is missing in the compared document.
+                    </div>
+                  )
+                ) : (
+                  <p className="text-sm text-[var(--color-text-muted)]">Select a section to compare.</p>
+                )}
+              </div>
+            </article>
           </div>
-        </section>
-      ) : null}
+        </main>
+      </div>
 
+      {/* Legend */}
+      {result && (
+        <div 
+          className="fixed bottom-5 left-1/2 flex -translate-x-1/2 gap-5 rounded-lg px-4 py-2.5 text-xs shadow-md"
+          style={{ 
+            background: 'white',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span 
+              className="h-3 w-3 rounded-sm" 
+              style={{ background: 'var(--color-added)' }}
+            />
+            <span style={{ color: 'var(--color-text-secondary)' }}>Added</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span 
+              className="h-3 w-3 rounded-sm" 
+              style={{ background: 'var(--color-removed)' }}
+            />
+            <span style={{ color: 'var(--color-text-secondary)' }}>Removed</span>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay */}
       {isBootstrapping ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 backdrop-blur-sm">
-          <div className="w-[min(92vw,560px)] rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.22)]">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(26, 26, 26, 0.5)', backdropFilter: 'blur(4px)' }}
+        >
+          <div 
+            className="w-[min(92vw,480px)] rounded-lg border border-[var(--color-border)] bg-white p-6 shadow-xl"
+          >
             <div className="mb-4 flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-teal-50 text-teal-700">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <span 
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full"
+                style={{ 
+                  background: 'var(--color-primary-subtle)', 
+                  color: 'var(--color-primary)' 
+                }}
+              >
+                <span 
+                  className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" 
+                />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Preparing your comparison workspace</p>
-                <p className="text-xs text-slate-500">Loading default IFRS vs AASB documents</p>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  Preparing your comparison workspace
+                </p>
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  Loading default IFRS vs AASB documents
+                </p>
               </div>
             </div>
             <LoadingProgress percent={progressPercent} label={progressLabel} />
           </div>
+        </div>
+      ) : null}
+
+      {/* Error Toast */}
+      {error ? (
+        <div 
+          className="fixed bottom-5 right-5 max-w-md rounded-lg border px-4 py-3 text-sm shadow-lg"
+          style={{ 
+            background: 'var(--color-removed-bg)', 
+            borderColor: 'var(--color-removed)',
+            color: 'var(--color-removed-text)'
+          }}
+        >
+          {error}
         </div>
       ) : null}
     </div>

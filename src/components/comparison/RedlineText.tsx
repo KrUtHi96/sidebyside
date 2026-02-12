@@ -8,34 +8,54 @@ export const RedlineText = ({
   side: "base" | "compared";
 }) => {
   return (
-    <pre className="text-[15px] leading-7 whitespace-pre-wrap break-words font-serif text-slate-800">
+    <pre 
+      className="whitespace-pre-wrap break-words font-sans text-sm leading-7"
+      style={{ color: "var(--color-text-secondary)" }}
+    >
       {tokens.map((token, index) => {
+        // In base panel, don't show added text
         if (side === "base" && token.kind === "added") {
           return null;
         }
 
+        // Removed text styling
         if (token.kind === "removed") {
           return (
             <span
               key={`token-${index}`}
-              className="bg-rose-50 text-rose-800 line-through decoration-2 decoration-rose-700"
+              style={{
+                background: "var(--color-removed-bg)",
+                color: "var(--color-removed-text)",
+                textDecoration: "line-through",
+                textDecorationThickness: "2px",
+                padding: "1px 2px",
+                borderRadius: "2px",
+              }}
             >
               {token.value}
             </span>
           );
         }
 
+        // Added text styling
         if (token.kind === "added") {
           return (
             <span
               key={`token-${index}`}
-              className="bg-emerald-50 text-emerald-800 font-semibold"
+              style={{
+                background: "var(--color-added-bg)",
+                color: "var(--color-added-text)",
+                fontWeight: 500,
+                padding: "1px 2px",
+                borderRadius: "2px",
+              }}
             >
               {token.value}
             </span>
           );
         }
 
+        // Equal text (no special styling)
         return <span key={`token-${index}`}>{token.value}</span>;
       })}
     </pre>

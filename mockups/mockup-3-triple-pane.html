@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SideBySide - Triple Pane (Power User)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fafafa; height: 100vh; overflow: hidden; }
+    
+    /* Header */
+    .header { height: 60px; background: #fff; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; padding: 0 20px; gap: 20px; }
+    .logo { font-weight: 700; font-size: 18px; color: #1a1a1a; display: flex; align-items: center; gap: 8px; }
+    .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
+    
+    /* File Strip */
+    .file-strip { display: flex; gap: 12px; align-items: center; padding: 6px 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .file-item { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; }
+    .file-item.active { border-color: #667eea; box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1); }
+    .file-color { width: 8px; height: 8px; border-radius: 50%; }
+    .file-color.base { background: #94a3b8; }
+    .file-color.compared { background: #667eea; }
+    .vs-text { color: #94a3b8; font-size: 12px; font-weight: 600; }
+    
+    /* Header Actions */
+    .header-actions { display: flex; gap: 8px; margin-left: auto; }
+    .header-btn { padding: 8px 14px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #475569; }
+    .header-btn:hover { background: #f8fafc; }
+    .header-btn.primary { background: #667eea; color: #fff; border-color: #667eea; }
+    .header-btn.primary:hover { background: #5a6fd6; }
+    
+    /* Main Layout - 3 Panes */
+    .main-container { display: flex; height: calc(100vh - 60px); }
+    
+    /* Left Sidebar - Navigation */
+    .nav-sidebar { width: 260px; background: #fff; border-right: 1px solid #e5e5e5; display: flex; flex-direction: column; }
+    .nav-header { padding: 16px; border-bottom: 1px solid #e5e5e5; }
+    .nav-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .nav-stats { display: flex; gap: 12px; }
+    .stat-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; }
+    .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .stat-dot.added { background: #22c55e; }
+    .stat-dot.removed { background: #ef4444; }
+    .stat-dot.modified { background: #f59e0b; }
+    
+    .nav-search { padding: 12px 16px; border-bottom: 1px solid #e5e5e5; }
+    .search-input { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; background: #f8fafc; }
+    
+    .nav-tree { flex: 1; overflow-y: auto; padding: 8px; }
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; border-radius: 6px; }
+    .nav-group-header:hover { background: #f1f5f9; }
+    .nav-group-toggle { font-size: 10px; color: #94a3b8; }
+    
+    .nav-item { display: flex; align-items: center; padding: 8px 12px; padding-left: 28px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #475569; margin-bottom: 2px; }
+    .nav-item:hover { background: #f1f5f9; }
+    .nav-item.active { background: #eff6ff; color: #2563eb; }
+    .nav-item-num { font-family: monospace; font-size: 11px; color: #94a3b8; margin-right: 10px; min-width: 30px; }
+    .nav-item.active .nav-item-num { color: #2563eb; }
+    .nav-item-indicator { width: 6px; height: 6px; border-radius: 50%; margin-left: auto; }
+    .nav-item-indicator.added { background: #22c55e; }
+    .nav-item-indicator.removed { background: #ef4444; }
+    .nav-item-indicator.modified { background: #f59e0b; }
+    
+    /* Center - Comparison */
+    .comparison-pane { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+    .compare-toolbar { height: 48px; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; padding: 0 20px; gap: 16px; }
+    .view-toggle { display: flex; background: #f1f5f9; border-radius: 8px; padding: 3px; }
+    .view-btn { padding: 6px 14px; border: none; background: transparent; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; color: #64748b; }
+    .view-btn.active { background: #fff; color: #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    
+    .filter-chips { display: flex; gap: 8px; }
+    .filter-chip { padding: 5px 12px; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .filter-chip:hover { background: #f8fafc; }
+    .filter-chip.active { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
+    .filter-chip .count { background: rgba(0,0,0,0.1); padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+    .filter-chip.active .count { background: #2563eb; color: #fff; }
+    
+    .compare-content { flex: 1; overflow-y: auto; padding: 24px; }
+    .compare-table { width: 100%; border-collapse: collapse; }
+    .compare-row { border-bottom: 1px solid #f1f5f9; }
+    .compare-row:hover { background: #fafafa; }
+    .compare-cell { padding: 20px; vertical-align: top; width: 50%; }
+    .compare-cell:first-child { border-right: 1px solid #f1f5f9; }
+    
+    .para-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .para-num { font-family: monospace; font-size: 12px; padding: 4px 10px; background: #f1f5f9; border-radius: 6px; color: #475569; font-weight: 600; }
+    .para-status { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+    .para-status.unchanged { background: #f1f5f9; color: #64748b; }
+    .para-status.added { background: #dcfce7; color: #166534; }
+    .para-status.removed { background: #fee2e2; color: #991b1b; }
+    .para-status.modified { background: #fef3c7; color: #92400e; }
+    
+    .para-text { line-height: 1.7; color: #334155; font-size: 14px; }
+    .highlight-add { background: #dcfce7; color: #166534; padding: 2px 4px; border-radius: 3px; }
+    .highlight-del { background: #fee2e2; color: #991b1b; text-decoration: line-through; padding: 2px 4px; border-radius: 3px; }
+    .highlight-mod { background: #fef3c7; color: #92400e; padding: 2px 4px; border-radius: 3px; }
+    
+    /* Right Sidebar - Context */
+    .context-sidebar { width: 320px; background: #fff; border-left: 1px solid #e5e5e5; display: flex; flex-direction: column; }
+    .context-tabs { display: flex; border-bottom: 1px solid #e5e5e5; }
+    .context-tab { flex: 1; padding: 14px; border: none; background: transparent; font-size: 13px; font-weight: 500; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; }
+    .context-tab:hover { color: #334155; }
+    .context-tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+    
+    .context-content { flex: 1; overflow-y: auto; padding: 16px; }
+    
+    /* Diff Summary */
+    .diff-card { background: #f8fafc; border-radius: 10px; padding: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+    .diff-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .diff-card-title { font-size: 13px; font-weight: 600; color: #1e293b; }
+    .diff-card-badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+    .diff-card-badge.modified { background: #fef3c7; color: #92400e; }
+    
+    .diff-stat { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 13px; color: #475569; }
+    .diff-stat-bar { flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; display: flex; }
+    .diff-stat-fill { height: 100%; }
+    .diff-stat-fill.added { background: #22c55e; }
+    .diff-stat-fill.removed { background: #ef4444; }
+    
+    /* AI Summary */
+    .ai-summary { background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); border: 1px solid #dbeafe; border-radius: 10px; padding: 16px; }
+    .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .ai-icon { width: 24px; height: 24px; background: #2563eb; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; }
+    .ai-title { font-size: 13px; font-weight: 600; color: #1e40af; }
+    .ai-text { font-size: 13px; line-height: 1.6; color: #3b82f6; }
+    
+    /* Comments */
+    .comment { padding: 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 12px; }
+    .comment-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .comment-avatar { width: 28px; height: 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 600; }
+    .comment-meta { flex: 1; }
+    .comment-author { font-size: 12px; font-weight: 600; color: #1e293b; }
+    .comment-time { font-size: 11px; color: #94a3b8; }
+    .comment-text { font-size: 13px; line-height: 1.5; color: #475569; }
+    
+    /* Changes List */
+    .change-list { display: flex; flex-direction: column; gap: 8px; }
+    .change-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 3px solid transparent; }
+    .change-item.added { border-left-color: #22c55e; }
+    .change-item.removed { border-left-color: #ef4444; }
+    .change-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+    .change-icon.added { background: #dcfce7; color: #166534; }
+    .change-icon.removed { background: #fee2e2; color: #991b1b; }
+    .change-text { font-size: 12px; line-height: 1.5; color: #475569; }
+    .change-para { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">⚖</div>
+      SideBySide
+    </div>
+    
+    <div class="file-strip">
+      <div class="file-item active">
+        <span class="file-color base"></span>
+        <span>base-regulation.pdf</span>
+      </div>
+      <span class="vs-text">VS</span>
+      <div class="file-item active">
+        <span class="file-color compared"></span>
+        <span>updated-regulation.pdf</span>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button class="header-btn">🔍 Search</button>
+      <button class="header-btn">⚙ Settings</button>
+      <button class="header-btn primary">📥 Export Report</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Left Sidebar - Navigation -->
+    <aside class="nav-sidebar">
+      <div class="nav-header">
+        <div class="nav-title">Document Sections</div>
+        <div class="nav-stats">
+          <div class="stat-item"><span class="stat-dot added"></span> 12 Added</div>
+          <div class="stat-item"><span class="stat-dot removed"></span> 8 Removed</div>
+          <div class="stat-item"><span class="stat-dot modified"></span> 24 Modified</div>
+        </div>
+      </div>
+      
+      <div class="nav-search">
+        <input type="text" class="search-input" placeholder="Search sections...">
+      </div>
+      
+      <div class="nav-tree">
+        <div class="nav-group">
+          <div class="nav-group-header">
+            <span class="nav-group-toggle">▼</span>
+            <span>Front Matter</span>
+          </div>
+          <div class="nav-item"><span class="nav-item-num">1</span>Introduction</div>
+          <div class="nav-item"><span class="nav-item-num">2</span>Scope & Application</div>
+          <div class="nav-item"><span class="nav-item-num">3</span>Definitions</div>
+        </div>
+        
+        <div class="nav-group">
+          <div class="nav-group-header">
+            <span class="nav-group-toggle">▼</span>
+            <span>Main Content</span>
+          </div>
+          <div class="nav-item active"><span class="nav-item-num">4</span>General Requirements<div class="nav-item-indicator modified"></div></div>
+          <div class="nav-item" style="padding-left: 40px;"><span class="nav-item-num">4.1</span>Compliance</div>
+          <div class="nav-item" style="padding-left: 40px;"><span class="nav-item-num">4.2</span>New Provision<div class="nav-item-indicator added"></div></div>
+          <div class="nav-item" style="padding-left: 40px;"><span class="nav-item-num">4.3</span>Reporting</div>
+          <div class="nav-item"><span class="nav-item-num">5</span>Old Section<div class="nav-item-indicator removed"></div></div>
+          <div class="nav-item"><span class="nav-item-num">6</span>Financial Disclosures<div class="nav-item-indicator modified"></div></div>
+        </div>
+        
+        <div class="nav-group">
+          <div class="nav-group-header">
+            <span class="nav-group-toggle">▶</span>
+            <span>Appendices</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center - Comparison -->
+    <main class="comparison-pane">
+      <div class="compare-toolbar">
+        <div class="view-toggle">
+          <button class="view-btn active">Side by Side</button>
+          <button class="view-btn">Unified</button>
+          <button class="view-btn">Inline</button>
+        </div>
+        <div class="filter-chips">
+          <div class="filter-chip active">All <span class="count">44</span></div>
+          <div class="filter-chip">Added <span class="count">12</span></div>
+          <div class="filter-chip">Removed <span class="count">8</span></div>
+          <div class="filter-chip">Modified <span class="count">24</span></div>
+        </div>
+      </div>
+      
+      <div class="compare-content">
+        <table class="compare-table">
+          <tr class="compare-row">
+            <td class="compare-cell">
+              <div class="para-header">
+                <span class="para-num">4.2</span>
+                <span class="para-status modified">Modified</span>
+              </div>
+              <div class="para-text">
+                Organizations must maintain <span class="highlight-del">annual</span> records of all transactions and provide them upon request to regulatory authorities. The records must be kept for a minimum period of <span class="highlight-del">five</span> years from the date of transaction.
+              </div>
+            </td>
+            <td class="compare-cell">
+              <div class="para-header">
+                <span class="para-num">4.2</span>
+                <span class="para-status modified">Modified</span>
+              </div>
+              <div class="para-text">
+                Organizations must maintain <span class="highlight-add">comprehensive digital and physical</span> records of all transactions and provide them upon request to regulatory authorities. The records must be kept for a minimum period of <span class="highlight-add">seven</span> years from the date of transaction.
+              </div>
+            </td>
+          </tr>
+          <tr class="compare-row">
+            <td class="compare-cell">
+              <div class="para-header">
+                <span class="para-num">4.3</span>
+                <span class="para-status unchanged">Unchanged</span>
+              </div>
+              <div class="para-text">
+                Failure to comply with reporting requirements may result in penalties as outlined in Section 7.
+              </div>
+            </td>
+            <td class="compare-cell">
+              <div class="para-header">
+                <span class="para-num">4.3</span>
+                <span class="para-status unchanged">Unchanged</span>
+              </div>
+              <div class="para-text">
+                Failure to comply with reporting requirements may result in penalties as outlined in Section 7.
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </main>
+
+    <!-- Right Sidebar - Context -->
+    <aside class="context-sidebar">
+      <div class="context-tabs">
+        <button class="context-tab active">Summary</button>
+        <button class="context-tab">Changes</button>
+        <button class="context-tab">Comments</button>
+      </div>
+      
+      <div class="context-content">
+        <!-- AI Summary Card -->
+        <div class="ai-summary">
+          <div class="ai-header">
+            <div class="ai-icon">✦</div>
+            <span class="ai-title">AI Summary</span>
+          </div>
+          <div class="ai-text">
+            Section 4.2 has been significantly expanded to require both digital and physical record keeping, and the retention period has increased from 5 to 7 years. This represents a substantial compliance burden increase.
+          </div>
+        </div>
+        
+        <!-- Diff Stats -->
+        <div class="diff-card" style="margin-top: 16px;">
+          <div class="diff-card-header">
+            <span class="diff-card-title">Paragraph 4.2 Changes</span>
+            <span class="diff-card-badge modified">Modified</span>
+          </div>
+          <div class="diff-stat">
+            <span style="width: 60px;">Added</span>
+            <div class="diff-stat-bar">
+              <div class="diff-stat-fill added" style="width: 65%;"></div>
+            </div>
+            <span style="width: 40px; text-align: right;">+42</span>
+          </div>
+          <div class="diff-stat">
+            <span style="width: 60px;">Removed</span>
+            <div class="diff-stat-bar">
+              <div class="diff-stat-fill removed" style="width: 15%;"></div>
+            </div>
+            <span style="width: 40px; text-align: right;">-8</span>
+          </div>
+        </div>
+        
+        <!-- Changes List -->
+        <div style="margin-top: 20px;">
+          <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Key Changes</div>
+          <div class="change-list">
+            <div class="change-item added">
+              <div class="change-icon added">+</div>
+              <div>
+                <div class="change-text">Added requirement for digital records</div>
+                <div class="change-para">Paragraph 4.2</div>
+              </div>
+            </div>
+            <div class="change-item added">
+              <div class="change-icon added">+</div>
+              <div>
+                <div class="change-text">Extended retention period to 7 years</div>
+                <div class="change-para">Paragraph 4.2</div>
+              </div>
+            </div>
+            <div class="change-item removed">
+              <div class="change-icon removed">−</div>
+              <div>
+                <div class="change-text">Removed "annual" record limitation</div>
+                <div class="change-para">Paragraph 4.2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Comments -->
+        <div style="margin-top: 24px;">
+          <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Team Comments</div>
+          <div class="comment">
+            <div class="comment-header">
+              <div class="comment-avatar">JD</div>
+              <div class="comment-meta">
+                <div class="comment-author">John Doe</div>
+                <div class="comment-time">2 hours ago</div>
+              </div>
+            </div>
+            <div class="comment-text">This change will require updating our document retention policy. We need to ensure IT infrastructure can handle 7 years of digital records.</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>

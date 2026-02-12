@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SideBySide - Classic Split View</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; height: 100vh; overflow: hidden; }
+    
+    /* Top Navigation Bar */
+    .navbar { height: 56px; background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; padding: 0 20px; gap: 16px; }
+    .logo { font-weight: 700; font-size: 18px; color: #1a1a1a; display: flex; align-items: center; gap: 8px; }
+    .logo-icon { width: 24px; height: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 6px; }
+    .nav-divider { width: 1px; height: 24px; background: #e0e0e0; margin: 0 8px; }
+    
+    /* Upload Section */
+    .upload-area { display: flex; gap: 12px; align-items: center; flex: 1; }
+    .file-input { padding: 8px 16px; border: 1px dashed #ccc; border-radius: 6px; font-size: 13px; color: #666; background: #fafafa; cursor: pointer; }
+    .file-input:hover { border-color: #667eea; background: #f0f4ff; }
+    .compare-btn { padding: 8px 20px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; }
+    .compare-btn:hover { background: #5a6fd6; }
+    
+    /* Filters & Export */
+    .toolbar { display: flex; gap: 12px; align-items: center; margin-left: auto; }
+    .filter-select { padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #fff; }
+    .export-btn { padding: 6px 16px; border: 1px solid #ddd; background: #fff; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .export-btn:hover { background: #f5f5f5; }
+    
+    /* Main Layout */
+    .main-container { display: flex; height: calc(100vh - 56px); }
+    
+    /* Collapsible Sidebar */
+    .sidebar { width: 280px; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; transition: width 0.3s ease; }
+    .sidebar.collapsed { width: 48px; }
+    .sidebar-header { padding: 16px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: space-between; }
+    .sidebar-title { font-size: 14px; font-weight: 600; color: #333; }
+    .sidebar.collapsed .sidebar-title { display: none; }
+    .collapse-btn { width: 28px; height: 28px; border: none; background: #f5f5f5; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .collapse-btn:hover { background: #e8e8e8; }
+    
+    /* Section Tree */
+    .section-tree { flex: 1; overflow-y: auto; padding: 12px; }
+    .sidebar.collapsed .section-tree { display: none; }
+    .section-item { padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #555; margin-bottom: 2px; }
+    .section-item:hover { background: #f5f5f5; }
+    .section-item.active { background: #667eea15; color: #667eea; font-weight: 500; }
+    .section-item .num { color: #999; margin-right: 8px; font-family: monospace; }
+    .section-item.added { border-left: 3px solid #22c55e; }
+    .section-item.removed { border-left: 3px solid #ef4444; }
+    .section-item.changed { border-left: 3px solid #f59e0b; }
+    
+    /* Content Area */
+    .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* Comparison Header */
+    .compare-header { display: flex; height: 48px; background: #fff; border-bottom: 1px solid #e0e0e0; }
+    .panel-header { flex: 1; display: flex; align-items: center; padding: 0 20px; font-size: 13px; font-weight: 600; color: #333; }
+    .panel-header:first-child { border-right: 1px solid #e0e0e0; }
+    .panel-label { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .panel-label.base { background: #f3f4f6; color: #6b7280; }
+    .panel-label.compared { background: #dbeafe; color: #2563eb; }
+    
+    /* Split Panels */
+    .panels-container { flex: 1; display: flex; overflow: hidden; }
+    .panel { flex: 1; overflow-y: auto; padding: 24px; background: #fff; }
+    .panel:first-child { border-right: 1px solid #e0e0e0; }
+    
+    /* Text Content */
+    .paragraph { margin-bottom: 20px; line-height: 1.7; color: #374151; font-size: 14px; }
+    .paragraph-num { display: inline-block; padding: 2px 8px; background: #f3f4f6; border-radius: 4px; font-size: 12px; color: #6b7280; margin-bottom: 6px; font-family: monospace; }
+    .text-removed { background: #fee2e2; color: #991b1b; text-decoration: line-through; padding: 2px 0; }
+    .text-added { background: #dcfce7; color: #166534; padding: 2px 0; }
+    .text-changed { background: #fef3c7; color: #92400e; padding: 2px 0; }
+    
+    /* Sync Indicator */
+    .sync-indicator { position: fixed; bottom: 20px; right: 20px; padding: 8px 16px; background: #1a1a1a; color: #fff; border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+    .sync-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    /* Legend */
+    .legend { position: fixed; bottom: 20px; left: 300px; padding: 10px 16px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; gap: 16px; font-size: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+    .legend-dot.added { background: #22c55e; }
+    .legend-dot.removed { background: #ef4444; }
+    .legend-dot.changed { background: #f59e0b; }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo">
+      <div class="logo-icon"></div>
+      SideBySide
+    </div>
+    <div class="nav-divider"></div>
+    <div class="upload-area">
+      <div class="file-input">📄 base-regulation.pdf</div>
+      <span style="color: #999;">vs</span>
+      <div class="file-input">📄 updated-regulation.pdf</div>
+      <button class="compare-btn">Compare</button>
+    </div>
+    <div class="toolbar">
+      <select class="filter-select">
+        <option>All Changes</option>
+        <option>Added Only</option>
+        <option>Removed Only</option>
+        <option>Modified Only</option>
+      </select>
+      <button class="export-btn">📥 Export PDF</button>
+      <button class="export-btn">📥 Export Word</button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">📑 Sections</span>
+        <button class="collapse-btn" onclick="toggleSidebar()">◀</button>
+      </div>
+      <div class="section-tree">
+        <div class="section-item active"><span class="num">1</span>Introduction</div>
+        <div class="section-item changed"><span class="num">2</span>Scope & Application</div>
+        <div class="section-item"><span class="num">3</span>Definitions</div>
+        <div class="section-item changed"><span class="num">4</span>General Requirements</div>
+        <div class="section-item" style="padding-left: 24px;"><span class="num">4.1</span>Compliance</div>
+        <div class="section-item added" style="padding-left: 24px;"><span class="num">4.2</span>New Provision</div>
+        <div class="section-item" style="padding-left: 24px;"><span class="num">4.3</span>Reporting</div>
+        <div class="section-item removed"><span class="num">5</span>Old Section (Deleted)</div>
+        <div class="section-item changed"><span class="num">6</span>Financial Disclosures</div>
+        <div class="section-item" style="padding-left: 24px;"><span class="num">6.1</span>Annual Reports</div>
+        <div class="section-item" style="padding-left: 24px;"><span class="num">6.2</span>Quarterly Filings</div>
+        <div class="section-item changed" style="padding-left: 40px;"><span class="num">6.2(a)</span>Submission Deadlines</div>
+        <div class="section-item" style="padding-left: 40px;"><span class="num">6.2(b)</span>Format Requirements</div>
+        <div class="section-item"><span class="num">7</span>Penalties</div>
+        <div class="section-item"><span class="num">8</span>Effective Date</div>
+      </div>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="content">
+      <!-- Panel Headers -->
+      <div class="compare-header">
+        <div class="panel-header">
+          <span class="panel-label base">Base</span>
+          <span style="margin-left: 12px;">base-regulation.pdf</span>
+        </div>
+        <div class="panel-header">
+          <span class="panel-label compared">Compared</span>
+          <span style="margin-left: 12px;">updated-regulation.pdf</span>
+        </div>
+      </div>
+
+      <!-- Split Panels -->
+      <div class="panels-container">
+        <div class="panel">
+          <div class="paragraph">
+            <div class="paragraph-num">4.2</div>
+            <div>Organizations must maintain <span class="text-removed">annual</span> records of all transactions and provide them upon request to regulatory authorities. The records must be kept for a minimum period of five years from the date of transaction.</div>
+          </div>
+          <div class="paragraph">
+            <div class="paragraph-num">4.3</div>
+            <div>Failure to comply with reporting requirements may result in penalties as outlined in Section 7.</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="paragraph">
+            <div class="paragraph-num">4.2</div>
+            <div>Organizations must maintain <span class="text-added">comprehensive digital and physical</span> records of all transactions and provide them upon request to regulatory authorities. The records must be kept for a minimum period of <span class="text-added">seven</span> <span class="text-removed">five</span> years from the date of transaction.</div>
+          </div>
+          <div class="paragraph">
+            <div class="paragraph-num">4.3</div>
+            <div>Failure to comply with reporting requirements may result in penalties as outlined in Section 7.</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot added"></div> Added</div>
+    <div class="legend-item"><div class="legend-dot removed"></div> Removed</div>
+    <div class="legend-item"><div class="legend-dot changed"></div> Modified</div>
+  </div>
+
+  <!-- Sync Indicator -->
+  <div class="sync-indicator">
+    <div class="sync-dot"></div>
+    Scroll synchronized
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+    }
+  </script>
+</body>
+</html>
