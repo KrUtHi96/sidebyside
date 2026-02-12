@@ -58,6 +58,9 @@ export const ComparisonWorkspace = () => {
   const didBootstrapDefaults = useRef(false);
   const progressIntervalRef = useRef<number | null>(null);
   const progressCompletionRef = useRef<number | null>(null);
+  const baseScrollRef = useRef<HTMLDivElement | null>(null);
+  const comparedScrollRef = useRef<HTMLDivElement | null>(null);
+  const syncingFromRef = useRef<"base" | "compared" | null>(null);
 
   const isBootstrapping = loadingMode === "bootstrapping";
 
@@ -193,6 +196,75 @@ export const ComparisonWorkspace = () => {
   const onSelectSection = useCallback((header: string) => {
     setSelectedSectionHeader(header);
   }, []);
+
+  const syncScrollPosition = useCallback(
+    (source: HTMLDivElement, target: HTMLDivElement, sourceSide: "base" | "compared") => {
+      if (syncingFromRef.current && syncingFromRef.current !== sourceSide) {
+        return;
+      }
+
+      const sourceMaxScroll = source.scrollHeight - source.clientHeight;
+      const targetMaxScroll = target.scrollHeight - target.clientHeight;
+      const ratio = sourceMaxScroll > 0 ? source.scrollTop / sourceMaxScroll : 0;
+
+      syncingFromRef.current = sourceSide;
+      target.scrollTop = ratio * Math.max(0, targetMaxScroll);
+      window.requestAnimationFrame(() => {
+        if (syncingFromRef.current === sourceSide) {
+          syncingFromRef.current = null;
+        }
+      });
+    },
+    [],
+  );
+
+  const onBaseScroll = useCallback(() => {
+    if (syncingFromRef.current === "compared") {
+      return;
+    }
+
+    const source = baseScrollRef.current;
+    const target = comparedScrollRef.current;
+    if (!source || !target) {
+      return;
+    }
+
+    syncScrollPosition(source, target, "base");
+  }, [syncScrollPosition]);
+
+  const onComparedScroll = useCallback(() => {
+    if (syncingFromRef.current === "base") {
+      return;
+    }
+
+    const source = comparedScrollRef.current;
+    const target = baseScrollRef.current;
+    if (!source || !target) {
+      return;
+    }
+
+    syncScrollPosition(source, target, "compared");
+  }, [syncScrollPosition]);
+
+  useEffect(() => {
+    const base = baseScrollRef.current;
+    const compared = comparedScrollRef.current;
+    if (!base || !compared) {
+      return;
+    }
+
+    syncingFromRef.current = "base";
+    base.scrollTop = 0;
+    compared.scrollTop = 0;
+    const resetId = window.setTimeout(() => {
+      syncingFromRef.current = null;
+    }, 0);
+
+    return () => {
+      window.clearTimeout(resetId);
+      syncingFromRef.current = null;
+    };
+  }, [selectedSectionHeader]);
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[var(--color-bg-secondary)]">
@@ -398,7 +470,11 @@ export const ComparisonWorkspace = () => {
           <div className="flex flex-1 overflow-hidden">
             {/* Base Panel */}
             <article className="flex flex-1 flex-col overflow-hidden border-r border-[var(--color-border)] bg-white">
-              <div className="flex-1 overflow-y-auto p-6">
+              <div
+                ref={baseScrollRef}
+                onScroll={onBaseScroll}
+                className="flex-1 overflow-y-auto p-6"
+              >
                 {selectedSection ? (
                   selectedSection.baseSectionTextPreserved ? (
                     <pre 
@@ -427,7 +503,11 @@ export const ComparisonWorkspace = () => {
 
             {/* Compared Panel */}
             <article className="flex flex-1 flex-col overflow-hidden bg-white">
-              <div className="flex-1 overflow-y-auto p-6">
+              <div
+                ref={comparedScrollRef}
+                onScroll={onComparedScroll}
+                className="flex-1 overflow-y-auto p-6"
+              >
                 {selectedSection ? (
                   selectedSection.baseSectionTextPreserved || selectedSection.comparedSectionTextPreserved ? (
                     <RedlineText tokens={sectionTokens} side="compared" />
