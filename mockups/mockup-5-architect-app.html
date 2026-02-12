@@ -187,11 +187,11 @@
     }
     
     .sidebar-title { 
-      font-size: 12px; 
+      font-size: 10px; 
       font-weight: 600; 
-      color: var(--charcoal);
+      color: var(--warm-gray);
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
     }
     
     .sidebar.collapsed .sidebar-title { 
@@ -229,7 +229,7 @@
     }
     
     .section-item { 
-      padding: 8px 12px; 
+      padding: 10px 12px; 
       border-radius: 6px; 
       cursor: pointer; 
       font-size: 13px; 
@@ -240,6 +240,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
     
     .section-item:hover { 
@@ -267,6 +268,39 @@
     .section-item.added { border-left-color: var(--added); }
     .section-item.removed { border-left-color: var(--removed); }
     .section-item.changed { border-left-color: var(--changed); }
+    
+    /* Word stats badges in section items */
+    .word-stats {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    
+    .stat-badge {
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .stat-badge.added {
+      background: var(--added-bg);
+      color: var(--added);
+    }
+    
+    .stat-badge.removed {
+      background: var(--removed-bg);
+      color: var(--removed);
+    }
+    
+    .no-changes {
+      font-size: 10px;
+      color: var(--warm-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
     
     /* Content Area */
     .content { 
@@ -512,21 +546,21 @@
         <button class="collapse-btn" onclick="toggleSidebar()">◀</button>
       </div>
       <div class="section-tree">
-        <div class="section-item active"><span class="num">1</span>Introduction</div>
-        <div class="section-item changed"><span class="num">2</span>Scope & Application</div>
-        <div class="section-item"><span class="num">3</span>Definitions</div>
-        <div class="section-item changed"><span class="num">4</span>General Requirements</div>
-        <div class="section-item" style="padding-left: 28px;"><span class="num">4.1</span>Compliance</div>
-        <div class="section-item added" style="padding-left: 28px;"><span class="num">4.2</span>New Provision</div>
-        <div class="section-item" style="padding-left: 28px;"><span class="num">4.3</span>Reporting</div>
-        <div class="section-item removed"><span class="num">5</span>Old Section (Deleted)</div>
-        <div class="section-item changed"><span class="num">6</span>Financial Disclosures</div>
-        <div class="section-item" style="padding-left: 28px;"><span class="num">6.1</span>Annual Reports</div>
-        <div class="section-item" style="padding-left: 28px;"><span class="num">6.2</span>Quarterly Filings</div>
-        <div class="section-item changed" style="padding-left: 44px;"><span class="num">6.2a</span>Submission Deadlines</div>
-        <div class="section-item" style="padding-left: 44px;"><span class="num">6.2b</span>Format Requirements</div>
-        <div class="section-item"><span class="num">7</span>Penalties</div>
-        <div class="section-item"><span class="num">8</span>Effective Date</div>
+        <div class="section-item active"><span class="num">1</span>Introduction <span class="no-changes">no changes</span></div>
+        <div class="section-item changed"><span class="num">2</span>Scope & Application <span class="word-stats"><span class="stat-badge removed">−12</span><span class="stat-badge added">+34</span></span></div>
+        <div class="section-item"><span class="num">3</span>Definitions <span class="no-changes">no changes</span></div>
+        <div class="section-item changed"><span class="num">4</span>General Requirements <span class="word-stats"><span class="stat-badge removed">−8</span><span class="stat-badge added">+42</span></span></div>
+        <div class="section-item" style="padding-left: 28px;"><span class="num">4.1</span>Compliance <span class="no-changes">no changes</span></div>
+        <div class="section-item added" style="padding-left: 28px;"><span class="num">4.2</span>New Provision <span class="word-stats"><span class="stat-badge added">+156</span></span></div>
+        <div class="section-item" style="padding-left: 28px;"><span class="num">4.3</span>Reporting <span class="no-changes">no changes</span></div>
+        <div class="section-item removed"><span class="num">5</span>Old Section (Deleted) <span class="word-stats"><span class="stat-badge removed">−203</span></span></div>
+        <div class="section-item changed"><span class="num">6</span>Financial Disclosures <span class="word-stats"><span class="stat-badge removed">−24</span><span class="stat-badge added">+67</span></span></div>
+        <div class="section-item" style="padding-left: 28px;"><span class="num">6.1</span>Annual Reports <span class="no-changes">no changes</span></div>
+        <div class="section-item" style="padding-left: 28px;"><span class="num">6.2</span>Quarterly Filings <span class="no-changes">no changes</span></div>
+        <div class="section-item changed" style="padding-left: 44px;"><span class="num">6.2a</span>Submission Deadlines <span class="word-stats"><span class="stat-badge removed">−6</span><span class="stat-badge added">+18</span></span></div>
+        <div class="section-item" style="padding-left: 44px;"><span class="num">6.2b</span>Format Requirements <span class="no-changes">no changes</span></div>
+        <div class="section-item"><span class="num">7</span>Penalties <span class="no-changes">no changes</span></div>
+        <div class="section-item"><span class="num">8</span>Effective Date <span class="no-changes">no changes</span></div>
       </div>
     </aside>
 

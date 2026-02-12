@@ -1,35 +1,20 @@
 import clsx from "clsx";
-import type { SectionComparison, SectionMatchStatus } from "@/types/comparison";
+import type { SectionComparison, SectionMatchStatus, DiffToken } from "@/types/comparison";
 
-const STATUS_CONFIG: Record<SectionMatchStatus, { bg: string; text: string; label: string; indicator: string }> = {
-  matched: {
-    bg: "var(--color-added-subtle)",
-    text: "var(--color-added)",
-    label: "MATCHED SECTION",
-    indicator: "var(--color-added)",
-  },
-  missing_in_base: {
-    bg: "var(--color-changed-subtle)",
-    text: "var(--color-changed)",
-    label: "missing in base",
-    indicator: "var(--color-changed)",
-  },
-  missing_in_compared: {
-    bg: "var(--color-removed-subtle)",
-    text: "var(--color-removed)",
-    label: "missing in compared",
-    indicator: "var(--color-removed)",
-  },
-};
-
-const coverageConfig = (percent: number): { bg: string; text: string } => {
-  if (percent >= 99.9) {
-    return { bg: "var(--color-added-subtle)", text: "var(--color-added)" };
+// Calculate word counts from diff tokens
+const calculateWordStats = (tokens: DiffToken[]): { added: number; removed: number } => {
+  let added = 0;
+  let removed = 0;
+  
+  for (const token of tokens) {
+    if (token.kind === "added") {
+      added += token.value.trim().split(/\s+/).filter(Boolean).length;
+    } else if (token.kind === "removed") {
+      removed += token.value.trim().split(/\s+/).filter(Boolean).length;
+    }
   }
-  if (percent >= 95) {
-    return { bg: "var(--color-changed-subtle)", text: "var(--color-changed)" };
-  }
-  return { bg: "var(--color-removed-subtle)", text: "var(--color-removed)" };
+  
+  return { added, removed };
 };
 
 const shortLabel = (value: string): string => {
@@ -56,7 +41,9 @@ export const SectionSelector = ({
       <div className="flex flex-col gap-1 p-2">
         {sections.map((section) => {
           const selected = section.header === selectedHeader;
-          const status = STATUS_CONFIG[section.status];
+          const wordStats = calculateWordStats(section.sectionDiffWord);
+          const hasChanges = wordStats.added > 0 || wordStats.removed > 0;
+          
           return (
             <button
               key={`section-compact-${section.header}`}
@@ -75,10 +62,16 @@ export const SectionSelector = ({
             >
               {shortLabel(section.header)}
               {/* Change indicator dot */}
-              <span 
-                className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full"
-                style={{ background: status.indicator }}
-              />
+              {hasChanges && (
+                <span 
+                  className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full"
+                  style={{ 
+                    background: wordStats.removed > 0 
+                      ? "var(--color-removed)" 
+                      : "var(--color-added)" 
+                  }}
+                />
+              )}
             </button>
           );
         })}
@@ -91,8 +84,8 @@ export const SectionSelector = ({
       <div className="flex flex-col gap-1">
         {sections.map((section) => {
           const selected = section.header === selectedHeader;
-          const status = STATUS_CONFIG[section.status];
-          const coverage = coverageConfig(section.coverage.percent);
+          const wordStats = calculateWordStats(section.sectionDiffWord);
+          const hasChanges = wordStats.added > 0 || wordStats.removed > 0;
 
           return (
             <button
@@ -100,7 +93,7 @@ export const SectionSelector = ({
               type="button"
               onClick={() => onSelect(section.header)}
               className={clsx(
-                "w-full rounded-md border p-3 text-left transition",
+                "group flex items-center justify-between gap-3 rounded-md border p-3 text-left transition",
                 selected
                   ? "border-[var(--color-accent)]"
                   : "border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]"
@@ -109,41 +102,52 @@ export const SectionSelector = ({
                 background: selected ? "var(--color-accent-subtle)" : "transparent",
               }}
             >
-              <div className="flex items-center justify-between gap-2">
-                <p 
-                  className="text-sm font-medium"
-                  style={{ 
-                    color: selected ? "var(--color-accent)" : "var(--color-text-primary)" 
-                  }}
-                >
-                  {section.header}
-                </p>
-              </div>
-
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <span
-                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
-                  style={{
-                    background: status.bg,
-                    color: status.text,
-                  }}
-                >
-                  {status.label}
-                </span>
-                <span
-                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
-                  style={{
-                    background: coverage.bg,
-                    color: coverage.text,
-                  }}
-                >
-                  {section.coverage.percent.toFixed(0)}% COVERAGE
-                </span>
-              </div>
-
-              <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-                {section.startParagraph ?? "-"} to {section.endParagraph ?? "-"} • {section.rows.length} clauses
+              {/* Left: Section name */}
+              <p 
+                className="truncate text-sm font-medium"
+                style={{ 
+                  color: selected ? "var(--color-accent)" : "var(--color-text-primary)" 
+                }}
+              >
+                {section.header}
               </p>
+
+              {/* Right: Word stats */}
+              <div className="flex shrink-0 items-center gap-2">
+                {hasChanges ? (
+                  <>
+                    {wordStats.removed > 0 && (
+                      <span 
+                        className="rounded px-1.5 py-0.5 text-xs font-semibold"
+                        style={{ 
+                          background: "var(--color-removed-bg)",
+                          color: "var(--color-removed)"
+                        }}
+                      >
+                        −{wordStats.removed}
+                      </span>
+                    )}
+                    {wordStats.added > 0 && (
+                      <span 
+                        className="rounded px-1.5 py-0.5 text-xs font-semibold"
+                        style={{ 
+                          background: "var(--color-added-bg)",
+                          color: "var(--color-added)"
+                        }}
+                      >
+                        +{wordStats.added}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span 
+                    className="text-[10px] uppercase tracking-wide"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    No changes
+                  </span>
+                )}
+              </div>
             </button>
           );
         })}
