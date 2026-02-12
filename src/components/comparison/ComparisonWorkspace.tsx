@@ -26,6 +26,41 @@ const getSectionTokensByGranularity = (
   return section.sectionDiffWord;
 };
 
+const parseApiPayload = async (
+  response: Response,
+): Promise<{ payload: Record<string, unknown> | null; text: string | null }> => {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    const payload = (await response.json()) as Record<string, unknown>;
+    return { payload, text: null };
+  }
+
+  const text = await response.text();
+  return { payload: null, text };
+};
+
+const toApiError = (
+  response: Response,
+  payload: Record<string, unknown> | null,
+  text: string | null,
+): Error => {
+  if (payload && typeof payload.error === "string" && payload.error.trim()) {
+    return new Error(payload.error);
+  }
+
+  if (text && /^<!doctype html/i.test(text.trim())) {
+    return new Error(
+      `Request failed (${response.status}). API returned HTML instead of JSON.`,
+    );
+  }
+
+  if (text && text.trim()) {
+    return new Error(`Request failed (${response.status}): ${text.slice(0, 220)}`);
+  }
+
+  return new Error(`Request failed (${response.status}).`);
+};
+
 export const ComparisonWorkspace = () => {
   const [basePdf, setBasePdf] = useState<File | null>(null);
   const [comparedPdf, setComparedPdf] = useState<File | null>(null);
@@ -67,14 +102,18 @@ export const ComparisonWorkspace = () => {
         body: formData,
       });
 
-      const payload = await response.json();
+      const { payload, text } = await parseApiPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error ?? "Comparison failed.");
+        throw toApiError(response, payload, text);
       }
 
-      const nextResult = payload.result as ComparisonResult;
+      const nextResult = payload?.result as ComparisonResult;
+      if (!nextResult) {
+        throw new Error("Comparison response is missing result payload.");
+      }
+
       setResult(nextResult);
-      setComparisonId(payload.comparisonId as string);
+      setComparisonId(payload?.comparisonId as string);
       setSelectedSectionHeader(
         nextResult.selectedSectionDefault ?? nextResult.sections[0]?.header ?? null,
       );
@@ -97,14 +136,18 @@ export const ComparisonWorkspace = () => {
       const response = await fetch("/api/compare/default", {
         method: "GET",
       });
-      const payload = await response.json();
+      const { payload, text } = await parseApiPayload(response);
       if (!response.ok) {
-        throw new Error(payload.error ?? "Unable to load default comparison.");
+        throw toApiError(response, payload, text);
       }
 
-      const nextResult = payload.result as ComparisonResult;
+      const nextResult = payload?.result as ComparisonResult;
+      if (!nextResult) {
+        throw new Error("Default comparison response is missing result payload.");
+      }
+
       setResult(nextResult);
-      setComparisonId(payload.comparisonId as string);
+      setComparisonId(payload?.comparisonId as string);
       setSelectedSectionHeader(
         nextResult.selectedSectionDefault ?? nextResult.sections[0]?.header ?? null,
       );
