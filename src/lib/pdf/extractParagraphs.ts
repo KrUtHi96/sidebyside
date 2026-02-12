@@ -1,5 +1,3 @@
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
-import { WorkerMessageHandler } from "pdfjs-dist/legacy/build/pdf.worker.mjs";
 import type {
   ClauseNode,
   ExtractedDocument,
@@ -89,11 +87,82 @@ const normalizeHeader = (value: string): string =>
 const isInvalidPageRequestError = (error: unknown): boolean =>
   error instanceof Error && INVALID_PAGE_REQUEST_PATTERN.test(error.message);
 
-if (!(globalThis as { pdfjsWorker?: { WorkerMessageHandler?: unknown } }).pdfjsWorker) {
-  (globalThis as { pdfjsWorker?: { WorkerMessageHandler: unknown } }).pdfjsWorker = {
-    WorkerMessageHandler,
-  };
-}
+type PdfDocumentLoader = (options: {
+  data: Uint8Array;
+  useSystemFonts: boolean;
+  disableFontFace: boolean;
+}) => {
+  promise: Promise<{
+    numPages: number;
+    getPage: (pageNumber: number) => Promise<{
+      getViewport: (options: { scale: number }) => { height: number };
+      getTextContent: () => Promise<{
+        items: Array<{
+          str?: string;
+          transform?: number[];
+          width?: number;
+          height?: number;
+        }>;
+      }>;
+    }>;
+    destroy: () => Promise<void>;
+  }>;
+  destroy: () => Promise<void>;
+};
+
+let pdfLoaderPromise: Promise<PdfDocumentLoader> | null = null;
+
+const ensureDomMatrixPolyfill = async (): Promise<void> => {
+  if (typeof globalThis.DOMMatrix !== "undefined") {
+    return;
+  }
+
+  try {
+    const domMatrixModule = await import("@thednp/dommatrix");
+    const DomMatrixCtor =
+      (domMatrixModule as { DOMMatrix?: unknown }).DOMMatrix ??
+      (domMatrixModule as { default?: unknown }).default ??
+      domMatrixModule;
+
+    if (DomMatrixCtor) {
+      (globalThis as { DOMMatrix?: unknown }).DOMMatrix = DomMatrixCtor;
+    }
+  } catch {
+    // If polyfill import fails, pdfjs import will raise an actionable runtime error.
+  }
+};
+
+const getPdfDocumentLoader = async (): Promise<PdfDocumentLoader> => {
+  if (pdfLoaderPromise) {
+    return pdfLoaderPromise;
+  }
+
+  pdfLoaderPromise = (async () => {
+    await ensureDomMatrixPolyfill();
+
+    const [pdfModule, workerModule] = await Promise.all([
+      import("pdfjs-dist/legacy/build/pdf.mjs"),
+      import("pdfjs-dist/legacy/build/pdf.worker.mjs"),
+    ]);
+
+    const workerMessageHandler = (
+      workerModule as { WorkerMessageHandler?: unknown }
+    ).WorkerMessageHandler;
+
+    if (
+      workerMessageHandler &&
+      !(globalThis as { pdfjsWorker?: { WorkerMessageHandler?: unknown } }).pdfjsWorker
+    ) {
+      (globalThis as { pdfjsWorker?: { WorkerMessageHandler: unknown } }).pdfjsWorker = {
+        WorkerMessageHandler: workerMessageHandler,
+      };
+    }
+
+    return (pdfModule as { getDocument: PdfDocumentLoader }).getDocument;
+  })();
+
+  return pdfLoaderPromise;
+};
 
 const collapseSpaces = (value: string): string => value.replace(/\s+/g, " ").trim();
 
@@ -237,6 +306,7 @@ const joinLineFragments = (
 };
 
 const extractLines = async (buffer: Uint8Array): Promise<PageLine[]> => {
+  const getDocument = await getPdfDocumentLoader();
   const loadingTask = getDocument({
     data: buffer,
     useSystemFonts: true,
@@ -277,11 +347,16 @@ const extractLines = async (buffer: Uint8Array): Promise<PageLine[]> => {
 
       const fragments: PositionedText[] = [];
       for (const item of textContent.items) {
-        if (!("str" in item) || !("transform" in item) || !("width" in item)) {
+        if (
+          typeof item.str !== "string" ||
+          !Array.isArray(item.transform) ||
+          item.transform.length < 6 ||
+          typeof item.width !== "number"
+        ) {
           continue;
         }
 
-        const raw = item.str ?? "";
+        const raw = item.str;
         if (!raw.trim()) {
           continue;
         }

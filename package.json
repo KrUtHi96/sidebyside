@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.2",
+    "@thednp/dommatrix": "^3.0.2",
     "clsx": "^2.1.1",
     "diff": "^8.0.3",
     "next": "16.1.6",
