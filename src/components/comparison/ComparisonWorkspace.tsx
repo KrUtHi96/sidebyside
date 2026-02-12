@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
+import { LoadingProgress } from "@/components/comparison/LoadingProgress";
 import { RedlineText } from "@/components/comparison/RedlineText";
 import { SectionSelector } from "@/components/comparison/SectionSelector";
 import type {
@@ -61,17 +62,84 @@ const toApiError = (
   return new Error(`Request failed (${response.status}).`);
 };
 
+type LoadingMode = "idle" | "bootstrapping" | "comparing";
+
 export const ComparisonWorkspace = () => {
   const [basePdf, setBasePdf] = useState<File | null>(null);
   const [comparedPdf, setComparedPdf] = useState<File | null>(null);
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [comparisonId, setComparisonId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingMode, setLoadingMode] = useState<LoadingMode>("idle");
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [selectedSectionHeader, setSelectedSectionHeader] = useState<string | null>(null);
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [granularity, setGranularity] = useState<DiffGranularity>("word");
   const didBootstrapDefaults = useRef(false);
+  const progressIntervalRef = useRef<number | null>(null);
+  const progressCompletionRef = useRef<number | null>(null);
+
+  const isBootstrapping = loadingMode === "bootstrapping";
+  const isComparing = loadingMode === "comparing";
+  const isBusy = loadingMode !== "idle";
+
+  const clearProgressTimers = useCallback(() => {
+    if (progressIntervalRef.current) {
+      window.clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    if (progressCompletionRef.current) {
+      window.clearTimeout(progressCompletionRef.current);
+      progressCompletionRef.current = null;
+    }
+  }, []);
+
+  const startProgress = useCallback(
+    (mode: Exclude<LoadingMode, "idle">, label: string) => {
+      clearProgressTimers();
+      setLoadingMode(mode);
+      setProgressLabel(label);
+      setProgressPercent(8);
+
+      const cap = mode === "bootstrapping" ? 92 : 94;
+      progressIntervalRef.current = window.setInterval(() => {
+        setProgressPercent((previous) => {
+          if (previous >= cap) {
+            return previous;
+          }
+
+          const remaining = cap - previous;
+          const step = Math.max(0.4, remaining * 0.14);
+          return Math.min(cap, Number((previous + step).toFixed(1)));
+        });
+      }, 120);
+    },
+    [clearProgressTimers],
+  );
+
+  const completeProgress = useCallback(async () => {
+    clearProgressTimers();
+    setProgressPercent(100);
+
+    await new Promise<void>((resolve) => {
+      progressCompletionRef.current = window.setTimeout(() => {
+        setLoadingMode("idle");
+        setProgressPercent(0);
+        setProgressLabel("");
+        progressCompletionRef.current = null;
+        resolve();
+      }, 250);
+    });
+  }, [clearProgressTimers]);
+
+  const stopProgress = useCallback(() => {
+    clearProgressTimers();
+    setLoadingMode("idle");
+    setProgressPercent(0);
+    setProgressLabel("");
+  }, [clearProgressTimers]);
 
   const selectedSection = useMemo(
     () => result?.sections.find((section) => section.header === selectedSectionHeader) ?? null,
@@ -90,7 +158,7 @@ export const ComparisonWorkspace = () => {
     }
 
     setError(null);
-    setLoading(true);
+    startProgress("comparing", "Comparing PDFs...");
 
     try {
       const formData = new FormData();
@@ -117,20 +185,20 @@ export const ComparisonWorkspace = () => {
       setSelectedSectionHeader(
         nextResult.selectedSectionDefault ?? nextResult.sections[0]?.header ?? null,
       );
+      await completeProgress();
     } catch (requestError) {
       const message =
         requestError instanceof Error
           ? requestError.message
           : "Unable to compare files.";
       setError(message);
-    } finally {
-      setLoading(false);
+      stopProgress();
     }
-  }, [basePdf, comparedPdf]);
+  }, [basePdf, comparedPdf, completeProgress, startProgress, stopProgress]);
 
   const loadDefaultComparison = useCallback(async () => {
     setError(null);
-    setLoading(true);
+    startProgress("bootstrapping", "Loading default comparison...");
 
     try {
       const response = await fetch("/api/compare/default", {
@@ -151,16 +219,16 @@ export const ComparisonWorkspace = () => {
       setSelectedSectionHeader(
         nextResult.selectedSectionDefault ?? nextResult.sections[0]?.header ?? null,
       );
+      await completeProgress();
     } catch (requestError) {
       const message =
         requestError instanceof Error
           ? requestError.message
           : "Unable to load default comparison.";
       setError(`${message} Upload PDFs manually to continue.`);
-    } finally {
-      setLoading(false);
+      stopProgress();
     }
-  }, []);
+  }, [completeProgress, startProgress, stopProgress]);
 
   useEffect(() => {
     if (didBootstrapDefaults.current) {
@@ -170,6 +238,13 @@ export const ComparisonWorkspace = () => {
     didBootstrapDefaults.current = true;
     void loadDefaultComparison();
   }, [loadDefaultComparison]);
+
+  useEffect(
+    () => () => {
+      clearProgressTimers();
+    },
+    [clearProgressTimers],
+  );
 
   const exportPdf = useCallback(() => {
     if (!comparisonId) {
@@ -200,6 +275,7 @@ export const ComparisonWorkspace = () => {
               className="hidden"
               type="file"
               accept="application/pdf"
+              disabled={isBusy}
               onChange={(event) => setBasePdf(event.target.files?.[0] ?? null)}
             />
           </label>
@@ -213,6 +289,7 @@ export const ComparisonWorkspace = () => {
               className="hidden"
               type="file"
               accept="application/pdf"
+              disabled={isBusy}
               onChange={(event) => setComparedPdf(event.target.files?.[0] ?? null)}
             />
           </label>
@@ -220,10 +297,10 @@ export const ComparisonWorkspace = () => {
           <button
             type="button"
             onClick={compareFiles}
-            disabled={loading}
+            disabled={isBusy}
             className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
-            {loading ? "Comparing..." : "Compare"}
+            {isComparing ? "Comparing..." : "Compare"}
           </button>
 
           <button
@@ -245,6 +322,12 @@ export const ComparisonWorkspace = () => {
             <option value="paragraph">Paragraph diff</option>
           </select>
         </div>
+
+        {isComparing ? (
+          <div className="mt-3">
+            <LoadingProgress compact percent={progressPercent} label={progressLabel} />
+          </div>
+        ) : null}
 
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
           <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
@@ -399,6 +482,23 @@ export const ComparisonWorkspace = () => {
             </div>
           </div>
         </section>
+      ) : null}
+
+      {isBootstrapping ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 backdrop-blur-sm">
+          <div className="w-[min(92vw,560px)] rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.22)]">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Preparing your comparison workspace</p>
+                <p className="text-xs text-slate-500">Loading default IFRS vs AASB documents</p>
+              </div>
+            </div>
+            <LoadingProgress percent={progressPercent} label={progressLabel} />
+          </div>
+        </div>
       ) : null}
     </div>
   );
