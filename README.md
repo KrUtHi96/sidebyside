@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SideBySide Regulation Diff
 
-## Getting Started
+A Next.js app that compares two framework PDFs side-by-side by paragraph number and visualizes redlines.
 
-First, run the development server:
+## What it does
+
+- Upload `Base PDF` and `Compared PDF`
+- Extract paragraph-numbered text (supports nested references like `25(a)` and `25(b)(i)`)
+- Match paragraphs using strict normalized paragraph keys only
+- Show side-by-side redline:
+  - removed text as red strikethrough
+  - added text as green
+- Navigate quickly via paragraph index, search, and filters (`All`, `Changed`, `Added`, `Removed`)
+- Sync scrolling between base and compared panes by paragraph anchor
+- Export full comparison report as PDF, including appendix for unmatched/unextractable sections
+
+## Tech stack
+
+- Next.js 16 + TypeScript
+- `pdfjs-dist` for PDF text extraction
+- `diff` for word/sentence/paragraph diffs
+- `@react-pdf/renderer` for PDF report export
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open: [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API endpoints
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `POST /api/compare` - upload and compare two PDFs
+- `GET /api/compare/:id` - fetch comparison result
+- `GET /api/compare/:id/export?granularity=word|sentence|paragraph` - download full report PDF
 
-## Learn More
+## Notes
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- v1 supports text-based PDFs (no OCR).
+- Comparison results are in-memory only for current runtime.
