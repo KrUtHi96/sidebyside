@@ -1,10 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
-import { pathToFileURL } from "node:url";
-import {
-  getDocument,
-  GlobalWorkerOptions,
-} from "pdfjs-dist/legacy/build/pdf.mjs";
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { WorkerMessageHandler } from "pdfjs-dist/legacy/build/pdf.worker.mjs";
 import type {
   ClauseNode,
   ExtractedDocument,
@@ -91,22 +86,14 @@ const HEADER_LOOKUP = new Map<string, string>(
 const normalizeHeader = (value: string): string =>
   value.replace(/\s+/g, " ").trim().toLowerCase();
 
-const configurePdfJsWorker = () => {
-  const candidatePaths = [
-    path.join(process.cwd(), "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"),
-    path.join(process.cwd(), "node_modules/pdfjs-dist/build/pdf.worker.mjs"),
-  ];
-
-  const resolvedPath = candidatePaths.find((candidate) => fs.existsSync(candidate));
-  if (resolvedPath) {
-    GlobalWorkerOptions.workerSrc = pathToFileURL(resolvedPath).href;
-  }
-};
-
-configurePdfJsWorker();
-
 const isInvalidPageRequestError = (error: unknown): boolean =>
   error instanceof Error && INVALID_PAGE_REQUEST_PATTERN.test(error.message);
+
+if (!(globalThis as { pdfjsWorker?: { WorkerMessageHandler?: unknown } }).pdfjsWorker) {
+  (globalThis as { pdfjsWorker?: { WorkerMessageHandler: unknown } }).pdfjsWorker = {
+    WorkerMessageHandler,
+  };
+}
 
 const collapseSpaces = (value: string): string => value.replace(/\s+/g, " ").trim();
 
