@@ -7,25 +7,8 @@ import { RedlineText } from "@/components/comparison/RedlineText";
 import { SectionSelector } from "@/components/comparison/SectionSelector";
 import type {
   ComparisonResult,
-  DiffGranularity,
   DiffToken,
-  SectionComparison,
 } from "@/types/comparison";
-
-const getSectionTokensByGranularity = (
-  section: SectionComparison,
-  granularity: DiffGranularity,
-): DiffToken[] => {
-  if (granularity === "sentence") {
-    return section.sectionDiffSentence;
-  }
-
-  if (granularity === "paragraph") {
-    return section.sectionDiffParagraph;
-  }
-
-  return section.sectionDiffWord;
-};
 
 const parseApiPayload = async (
   response: Response,
@@ -62,11 +45,9 @@ const toApiError = (
   return new Error(`Request failed (${response.status}).`);
 };
 
-type LoadingMode = "idle" | "bootstrapping" | "comparing";
+type LoadingMode = "idle" | "bootstrapping";
 
 export const ComparisonWorkspace = () => {
-  const [basePdf, setBasePdf] = useState<File | null>(null);
-  const [comparedPdf, setComparedPdf] = useState<File | null>(null);
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [comparisonId, setComparisonId] = useState<string | null>(null);
   const [loadingMode, setLoadingMode] = useState<LoadingMode>("idle");
@@ -75,14 +56,11 @@ export const ComparisonWorkspace = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedSectionHeader, setSelectedSectionHeader] = useState<string | null>(null);
   const [railCollapsed, setRailCollapsed] = useState(false);
-  const [granularity, setGranularity] = useState<DiffGranularity>("word");
   const didBootstrapDefaults = useRef(false);
   const progressIntervalRef = useRef<number | null>(null);
   const progressCompletionRef = useRef<number | null>(null);
 
   const isBootstrapping = loadingMode === "bootstrapping";
-  const isComparing = loadingMode === "comparing";
-  const isBusy = loadingMode !== "idle";
 
   const clearProgressTimers = useCallback(() => {
     if (progressIntervalRef.current) {
@@ -97,13 +75,13 @@ export const ComparisonWorkspace = () => {
   }, []);
 
   const startProgress = useCallback(
-    (mode: Exclude<LoadingMode, "idle">, label: string) => {
+    (mode: "bootstrapping", label: string) => {
       clearProgressTimers();
       setLoadingMode(mode);
       setProgressLabel(label);
       setProgressPercent(8);
 
-      const cap = mode === "bootstrapping" ? 92 : 94;
+      const cap = 92;
       progressIntervalRef.current = window.setInterval(() => {
         setProgressPercent((previous) => {
           if (previous >= cap) {
@@ -146,55 +124,10 @@ export const ComparisonWorkspace = () => {
     [result, selectedSectionHeader],
   );
 
-  const sectionTokens = useMemo(
-    () => (selectedSection ? getSectionTokensByGranularity(selectedSection, granularity) : []),
-    [selectedSection, granularity],
+  const sectionTokens = useMemo<DiffToken[]>(
+    () => selectedSection?.sectionDiffWord ?? [],
+    [selectedSection],
   );
-
-  const compareFiles = useCallback(async () => {
-    if (!basePdf || !comparedPdf) {
-      setError("Upload both PDFs to run comparison.");
-      return;
-    }
-
-    setError(null);
-    startProgress("comparing", "Comparing PDFs...");
-
-    try {
-      const formData = new FormData();
-      formData.append("basePdf", basePdf);
-      formData.append("comparePdf", comparedPdf);
-
-      const response = await fetch("/api/compare", {
-        method: "POST",
-        body: formData,
-      });
-
-      const { payload, text } = await parseApiPayload(response);
-      if (!response.ok) {
-        throw toApiError(response, payload, text);
-      }
-
-      const nextResult = payload?.result as ComparisonResult;
-      if (!nextResult) {
-        throw new Error("Comparison response is missing result payload.");
-      }
-
-      setResult(nextResult);
-      setComparisonId(payload?.comparisonId as string);
-      setSelectedSectionHeader(
-        nextResult.selectedSectionDefault ?? nextResult.sections[0]?.header ?? null,
-      );
-      await completeProgress();
-    } catch (requestError) {
-      const message =
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to compare files.";
-      setError(message);
-      stopProgress();
-    }
-  }, [basePdf, comparedPdf, completeProgress, startProgress, stopProgress]);
 
   const loadDefaultComparison = useCallback(async () => {
     setError(null);
@@ -225,7 +158,7 @@ export const ComparisonWorkspace = () => {
         requestError instanceof Error
           ? requestError.message
           : "Unable to load default comparison.";
-      setError(`${message} Upload PDFs manually to continue.`);
+      setError(`${message} Refresh the page to retry default loading. If it persists, redeploy.`);
       stopProgress();
     }
   }, [completeProgress, startProgress, stopProgress]);
@@ -252,11 +185,11 @@ export const ComparisonWorkspace = () => {
     }
 
     window.open(
-      `/api/compare/${comparisonId}/export?granularity=${granularity}`,
+      `/api/compare/${comparisonId}/export?granularity=word`,
       "_blank",
       "noopener,noreferrer",
     );
-  }, [comparisonId, granularity]);
+  }, [comparisonId]);
 
   const onSelectSection = useCallback((header: string) => {
     setSelectedSectionHeader(header);
@@ -266,41 +199,37 @@ export const ComparisonWorkspace = () => {
     <div className="mx-auto flex min-h-screen w-full max-w-[1900px] flex-col gap-4 px-4 py-5 md:px-6">
       <header className="rounded-2xl border border-slate-200 bg-white/80 p-4 backdrop-blur-sm shadow-[0_5px_20px_rgba(15,23,42,0.08)]">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex min-w-[230px] flex-1 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">
+          <label
+            aria-disabled="true"
+            title="Default files are preselected; upload is locked."
+            className="flex min-w-[230px] flex-1 cursor-not-allowed items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600 opacity-90"
+          >
             <span className="font-semibold text-slate-900">Base PDF</span>
             <span className="truncate text-xs text-slate-500">
-              {basePdf?.name ?? result?.baseFileName ?? "Upload base framework"}
+              {result?.baseFileName ?? "IFRS base document"}
             </span>
-            <input
-              className="hidden"
-              type="file"
-              accept="application/pdf"
-              disabled={isBusy}
-              onChange={(event) => setBasePdf(event.target.files?.[0] ?? null)}
-            />
+            <input className="hidden" type="file" accept="application/pdf" disabled />
           </label>
 
-          <label className="flex min-w-[230px] flex-1 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">
+          <label
+            aria-disabled="true"
+            title="Default files are preselected; upload is locked."
+            className="flex min-w-[230px] flex-1 cursor-not-allowed items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600 opacity-90"
+          >
             <span className="font-semibold text-slate-900">Compared PDF</span>
             <span className="truncate text-xs text-slate-500">
-              {comparedPdf?.name ?? result?.comparedFileName ?? "Upload target framework"}
+              {result?.comparedFileName ?? "AASB compared document"}
             </span>
-            <input
-              className="hidden"
-              type="file"
-              accept="application/pdf"
-              disabled={isBusy}
-              onChange={(event) => setComparedPdf(event.target.files?.[0] ?? null)}
-            />
+            <input className="hidden" type="file" accept="application/pdf" disabled />
           </label>
 
           <button
             type="button"
-            onClick={compareFiles}
-            disabled={isBusy}
+            disabled
+            title="Default files are preselected; manual compare is locked."
             className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
-            {isComparing ? "Comparing..." : "Compare"}
+            Compare
           </button>
 
           <button
@@ -313,9 +242,11 @@ export const ComparisonWorkspace = () => {
           </button>
 
           <select
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-            value={granularity}
-            onChange={(event) => setGranularity(event.target.value as DiffGranularity)}
+            disabled
+            title="Diff mode is fixed to word in read-only compare mode."
+            className="rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-500 disabled:cursor-not-allowed"
+            value="word"
+            onChange={() => undefined}
           >
             <option value="word">Word diff (default)</option>
             <option value="sentence">Sentence diff</option>
@@ -323,13 +254,10 @@ export const ComparisonWorkspace = () => {
           </select>
         </div>
 
-        {isComparing ? (
-          <div className="mt-3">
-            <LoadingProgress compact percent={progressPercent} label={progressLabel} />
-          </div>
-        ) : null}
-
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+          <span className="rounded-full bg-cyan-50 px-2 py-1 text-cyan-800">
+            Using fixed default frameworks (read-only compare mode)
+          </span>
           <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
             Text dump comparison view
           </span>
