@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { buildSectionComparisons } from "@/lib/compare/buildComparison";
-import { extractDocumentStructure } from "@/lib/pdf/extractParagraphs";
+import { assertPdfRuntimeCompatible } from "@/lib/runtime/pdfRuntime";
 import {
   getDefaultExpiryMs,
   saveComparison,
@@ -12,6 +11,7 @@ import type { ComparisonResult } from "@/types/comparison";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const TEMP_ROOT = path.join(os.tmpdir(), "sidebyside-comparisons");
 
@@ -60,6 +60,13 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
+    assertPdfRuntimeCompatible();
+
+    const [{ buildSectionComparisons }, { extractDocumentStructure }] = await Promise.all([
+      import("@/lib/compare/buildComparison"),
+      import("@/lib/pdf/extractParagraphs"),
+    ]);
+
     const formData = await request.formData();
     const basePdf = formData.get("basePdf");
     const comparePdf = formData.get("comparePdf");

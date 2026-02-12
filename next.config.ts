@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Keep pdfjs-dist resolved at runtime in Node functions to avoid worker/module bundling issues.
+  serverExternalPackages: ["pdfjs-dist"],
 };
 
 export default nextConfig;

@@ -40,3 +40,9 @@ Open: [http://localhost:3000](http://localhost:3000)
 
 - v1 supports text-based PDFs (no OCR).
 - Comparison results are in-memory only for current runtime.
+
+## Vercel deployment notes
+
+- `pdfjs-dist@5` requires Node `>=20.16.0` (or `>=22.3.0`). Set Vercel Project Settings -> Node.js Version to `22.x`.
+- Compare routes are Node runtime API functions and use `/tmp` for temporary PDFs.
+- If default comparison fails, verify `public/samples/ifrs-base.pdf` and `public/samples/aasb-compared.pdf` exist in the deployed build.

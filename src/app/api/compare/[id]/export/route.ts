@@ -4,6 +4,7 @@ import { getStoredComparisonState } from "@/lib/store/comparisonStore";
 import type { DiffGranularity } from "@/types/comparison";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const isDiffGranularity = (value: string): value is DiffGranularity =>
   value === "word" || value === "sentence" || value === "paragraph";
