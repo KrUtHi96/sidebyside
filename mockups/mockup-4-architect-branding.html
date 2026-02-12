@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SideBySide - Architect's Draft Branding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      /* Architect's Draft Palette */
+      --charcoal: #2d2d2d;
+      --charcoal-light: #3d3d3d;
+      --off-white: #f5f5f0;
+      --pure-white: #ffffff;
+      --warm-gray: #8a8a85;
+      --light-gray: #e8e8e3;
+      --border-gray: #d4d4cf;
+      --terracotta: #c17767;
+      --terracotta-light: #d49182;
+      --terracotta-subtle: rgba(193, 119, 103, 0.08);
+      
+      /* Diff Colors - Muted for classic feel */
+      --added: #5a8f6e;
+      --added-bg: rgba(90, 143, 110, 0.12);
+      --added-text: #3d6b4d;
+      --removed: #b85c5c;
+      --removed-bg: rgba(184, 92, 92, 0.12);
+      --removed-text: #8b3d3d;
+      --changed: #c9a227;
+      --changed-bg: rgba(201, 162, 39, 0.12);
+      --changed-text: #8a7419;
+    }
+    
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+      background: var(--off-white); 
+      min-height: 100vh;
+      padding: 60px 40px;
+      color: var(--charcoal);
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    
+    .subtitle {
+      color: var(--warm-gray);
+      font-size: 16px;
+      margin-bottom: 48px;
+    }
+    
+    /* Section styling */
+    .section {
+      background: var(--pure-white);
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 32px;
+      border: 1px solid var(--border-gray);
+    }
+    
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--warm-gray);
+      margin-bottom: 32px;
+    }
+    
+    /* Logo showcase */
+    .logo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+    }
+    
+    .logo-showcase {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .logo-variant {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 24px;
+      border-radius: 8px;
+      border: 1px solid var(--light-gray);
+    }
+    
+    .logo-variant.dark {
+      background: var(--charcoal);
+      border-color: var(--charcoal-light);
+    }
+    
+    .logo-variant-label {
+      font-size: 12px;
+      color: var(--warm-gray);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* The Icon */
+    .sbs-icon {
+      width: 32px;
+      height: 32px;
+      position: relative;
+    }
+    
+    .sbs-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .sbs-icon .stroke {
+      stroke: var(--charcoal);
+      stroke-width: 1.5;
+      fill: none;
+    }
+    
+    .sbs-icon.dark .stroke {
+      stroke: var(--pure-white);
+    }
+    
+    /* Logo text */
+    .logo-text {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: var(--charcoal);
+    }
+    
+    .logo-text.light {
+      color: var(--pure-white);
+    }
+    
+    /* Icon sizes showcase */
+    .icon-sizes {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+    
+    .icon-size {
+      text-align: center;
+    }
+    
+    .icon-size-label {
+      font-size: 11px;
+      color: var(--warm-gray);
+      margin-top: 8px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    
+    /* Color palette */
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+    }
+    
+    .color-swatch {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--light-gray);
+    }
+    
+    .color-preview {
+      height: 80px;
+    }
+    
+    .color-info {
+      padding: 12px;
+      background: var(--pure-white);
+    }
+    
+    .color-name {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .color-hex {
+      font-size: 12px;
+      color: var(--warm-gray);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    
+    /* Typography showcase */
+    .type-showcase {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    
+    .type-sample {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--light-gray);
+    }
+    
+    .type-sample:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    
+    .type-label {
+      width: 100px;
+      font-size: 11px;
+      color: var(--warm-gray);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    
+    .type-example {
+      flex: 1;
+    }
+    
+    .type-specs {
+      font-size: 12px;
+      color: var(--warm-gray);
+      margin-top: 8px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    
+    .font-inter { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'IBM Plex Mono', monospace; }
+    
+    /* App preview mini */
+    .app-preview {
+      background: var(--off-white);
+      border-radius: 8px;
+      padding: 24px;
+      border: 1px solid var(--border-gray);
+    }
+    
+    .mini-navbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
+      background: var(--pure-white);
+      border-bottom: 1px solid var(--border-gray);
+      border-radius: 6px 6px 0 0;
+    }
+    
+    .mini-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .mini-content {
+      display: flex;
+      height: 200px;
+      background: var(--pure-white);
+      border-radius: 0 0 6px 6px;
+    }
+    
+    .mini-panel {
+      flex: 1;
+      padding: 20px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    
+    .mini-panel:first-child {
+      border-right: 1px solid var(--border-gray);
+    }
+    
+    .highlight-added {
+      background: var(--added-bg);
+      color: var(--added-text);
+      padding: 1px 3px;
+    }
+    
+    .highlight-removed {
+      background: var(--removed-bg);
+      color: var(--removed-text);
+      text-decoration: line-through;
+      padding: 1px 3px;
+    }
+    
+    /* Button showcase */
+    .button-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .btn-primary {
+      padding: 10px 24px;
+      background: var(--charcoal);
+      color: var(--pure-white);
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-primary:hover {
+      background: var(--charcoal-light);
+    }
+    
+    .btn-secondary {
+      padding: 10px 24px;
+      background: transparent;
+      color: var(--charcoal);
+      border: 1px solid var(--border-gray);
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-secondary:hover {
+      border-color: var(--charcoal);
+      background: var(--off-white);
+    }
+    
+    .btn-terracotta {
+      padding: 10px 24px;
+      background: var(--terracotta);
+      color: var(--pure-white);
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-terracotta:hover {
+      background: var(--terracotta-light);
+    }
+    
+    .btn-dashed {
+      padding: 10px 20px;
+      background: var(--off-white);
+      color: var(--warm-gray);
+      border: 1px dashed var(--border-gray);
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-dashed:hover {
+      border-color: var(--terracotta);
+      color: var(--terracotta);
+    }
+    
+    /* Favicon/Mark */
+    .favicon-grid {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+    
+    .favicon-sample {
+      text-align: center;
+    }
+    
+    .favicon-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+    }
+    
+    .favicon-box.light {
+      background: var(--pure-white);
+      border: 1px solid var(--border-gray);
+    }
+    
+    .favicon-box.dark {
+      background: var(--charcoal);
+    }
+    
+    .favicon-label {
+      font-size: 11px;
+      color: var(--warm-gray);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SideBySide — Architect's Draft</h1>
+    <p class="subtitle">Mid-century modern, technical precision, blueprint-inspired</p>
+    
+    <!-- Logo Section -->
+    <div class="section">
+      <div class="section-title">Logo System</div>
+      <div class="logo-grid">
+        <div class="logo-showcase">
+          <div class="logo-variant">
+            <div class="sbs-icon">
+              <svg viewBox="0 0 32 32" fill="none">
+                <!-- Left half with grid pattern -->
+                <rect x="3" y="4" width="11" height="24" class="stroke"/>
+                <line x1="7" y1="4" x2="7" y2="28" class="stroke" stroke-dasharray="2 2"/>
+                <line x1="11" y1="4" x2="11" y2="28" class="stroke" stroke-dasharray="2 2"/>
+                <line x1="3" y1="10" x2="14" y2="10" class="stroke" stroke-dasharray="2 2"/>
+                <line x1="3" y1="16" x2="14" y2="16" class="stroke" stroke-dasharray="2 2"/>
+                <line x1="3" y1="22" x2="14" y2="22" class="stroke" stroke-dasharray="2 2"/>
+                <!-- Center divider -->
+                <line x1="16" y1="2" x2="16" y2="30" class="stroke" style="stroke-width: 2;"/>
+                <!-- Right half clean -->
+                <rect x="18" y="4" width="11" height="24" class="stroke"/>
+              </svg>
+            </div>
+            <span class="logo-text">SideBySide</span>
+          </div>
+          <div class="logo-variant dark">
+            <div class="sbs-icon dark">
+              <svg viewBox="0 0 32 32" fill="none">
+                <rect x="3" y="4" width="11" height="24" class="stroke"/>
+                <line x1="7" y1="4" x2="7" y2="28" class="stroke" stroke-dasharray="2 2"/>
+                <line x1="11" y1="4" x2="11" y2="28" class="stroke" stroke-dasharray="2 2"/>
+                <line x1="3" y1="10" x2="14" y2="10" class="stroke" stroke-dasharray="2 2"/>
+                <line x1="3" y1="16" x2="14" y2="16" class="stroke" stroke-dasharray="2 2"/>
+                <line x1="3" y1="22" x2="14" y2="22" class="stroke" stroke-dasharray="2 2"/>
+                <line x1="16" y1="2" x2="16" y2="30" class="stroke" style="stroke-width: 2;"/>
+                <rect x="18" y="4" width="11" height="24" class="stroke"/>
+              </svg>
+            </div>
+            <span class="logo-text light">SideBySide</span>
+          </div>
+        </div>
+        
+        <div class="logo-showcase">
+          <div class="logo-variant-label">Icon Sizes</div>
+          <div class="icon-sizes">
+            <div class="icon-size">
+              <svg width="16" height="16" viewBox="0 0 32 32" fill="none" style="stroke: var(--charcoal); stroke-width: 2;">
+                <rect x="3" y="4" width="11" height="24" fill="none"/>
+                <line x1="16" y1="2" x2="16" y2="30" style="stroke-width: 3;"/>
+                <rect x="18" y="4" width="11" height="24" fill="none"/>
+              </svg>
+              <div class="icon-size-label">16px</div>
+            </div>
+            <div class="icon-size">
+              <svg width="24" height="24" viewBox="0 0 32 32" fill="none" style="stroke: var(--charcoal); stroke-width: 1.5;">
+                <rect x="3" y="4" width="11" height="24" fill="none"/>
+                <line x1="7" y1="4" x2="7" y2="28" stroke-dasharray="2 2"/>
+                <line x1="16" y1="2" x2="16" y2="30" style="stroke-width: 2;"/>
+                <rect x="18" y="4" width="11" height="24" fill="none"/>
+              </svg>
+              <div class="icon-size-label">24px</div>
+            </div>
+            <div class="icon-size">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="stroke: var(--charcoal); stroke-width: 1.5;">
+                <rect x="3" y="4" width="11" height="24" fill="none"/>
+                <line x1="7" y1="4" x2="7" y2="28" stroke-dasharray="2 2"/>
+                <line x1="11" y1="4" x2="11" y2="28" stroke-dasharray="2 2"/>
+                <line x1="3" y1="10" x2="14" y2="10" stroke-dasharray="2 2"/>
+                <line x1="3" y1="16" x2="14" y2="16" stroke-dasharray="2 2"/>
+                <line x1="3" y1="22" x2="14" y2="22" stroke-dasharray="2 2"/>
+                <line x1="16" y1="2" x2="16" y2="30" style="stroke-width: 2;"/>
+                <rect x="18" y="4" width="11" height="24" fill="none"/>
+              </svg>
+              <div class="icon-size-label">32px</div>
+            </div>
+            <div class="icon-size">
+              <svg width="48" height="48" viewBox="0 0 32 32" fill="none" style="stroke: var(--charcoal); stroke-width: 1.5;">
+                <rect x="3" y="4" width="11" height="24" fill="none"/>
+                <line x1="7" y1="4" x2="7" y2="28" stroke-dasharray="2 2"/>
+                <line x1="11" y1="4" x2="11" y2="28" stroke-dasharray="2 2"/>
+                <line x1="3" y1="10" x2="14" y2="10" stroke-dasharray="2 2"/>
+                <line x1="3" y1="16" x2="14" y2="16" stroke-dasharray="2 2"/>
+                <line x1="3" y1="22" x2="14" y2="22" stroke-dasharray="2 2"/>
+                <line x1="16" y1="2" x2="16" y2="30" style="stroke-width: 2;"/>
+                <rect x="18" y="4" width="11" height="24" fill="none"/>
+              </svg>
+              <div class="icon-size-label">48px</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Color Palette -->
+    <div class="section">
+      <div class="section-title">Color Palette</div>
+      <div class="palette">
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #2d2d2d;"></div>
+          <div class="color-info">
+            <div class="color-name">Charcoal</div>
+            <div class="color-hex">#2d2d2d</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #f5f5f0;"></div>
+          <div class="color-info">
+            <div class="color-name">Off-White</div>
+            <div class="color-hex">#f5f5f0</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #c17767;"></div>
+          <div class="color-info">
+            <div class="color-name">Terracotta</div>
+            <div class="color-hex">#c17767</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #8a8a85;"></div>
+          <div class="color-info">
+            <div class="color-name">Warm Gray</div>
+            <div class="color-hex">#8a8a85</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #e8e8e3;"></div>
+          <div class="color-info">
+            <div class="color-name">Light Gray</div>
+            <div class="color-hex">#e8e8e3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Typography -->
+    <div class="section">
+      <div class="section-title">Typography</div>
+      <div class="type-showcase">
+        <div class="type-sample">
+          <div class="type-label">Logo</div>
+          <div class="type-example">
+            <div class="font-inter" style="font-size: 20px; font-weight: 600; letter-spacing: -0.3px;">SideBySide</div>
+            <div class="type-specs">Inter · 20px · Weight 600 · Tracking -0.3px</div>
+          </div>
+        </div>
+        <div class="type-sample">
+          <div class="type-label">Heading</div>
+          <div class="type-example">
+            <div class="font-inter" style="font-size: 18px; font-weight: 600;">Section 4.2 — Compliance Requirements</div>
+            <div class="type-specs">Inter · 18px · Weight 600</div>
+          </div>
+        </div>
+        <div class="type-sample">
+          <div class="type-label">Body</div>
+          <div class="type-example">
+            <div class="font-inter" style="font-size: 14px; line-height: 1.7;">Organizations must maintain comprehensive records of all transactions and provide them upon request to regulatory authorities.</div>
+            <div class="type-specs">Inter · 14px · Weight 400 · Line-height 1.7</div>
+          </div>
+        </div>
+        <div class="type-sample">
+          <div class="type-label">Mono</div>
+          <div class="type-example">
+            <div class="font-mono" style="font-size: 12px;">4.2(a) — Submission Deadlines</div>
+            <div class="type-specs">IBM Plex Mono · 12px · Weight 500</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Buttons -->
+    <div class="section">
+      <div class="section-title">Buttons</div>
+      <div class="button-row">
+        <button class="btn-primary">Compare Documents</button>
+        <button class="btn-secondary">Export PDF</button>
+        <button class="btn-terracotta">Upload New</button>
+        <button class="btn-dashed">📄 base-document.pdf</button>
+      </div>
+    </div>
+    
+    <!-- App Preview -->
+    <div class="section">
+      <div class="section-title">UI Preview</div>
+      <div class="app-preview">
+        <div class="mini-navbar">
+          <div class="mini-logo">
+            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" style="stroke: #2d2d2d; stroke-width: 1.5;">
+              <rect x="3" y="4" width="11" height="24" fill="none"/>
+              <line x1="7" y1="4" x2="7" y2="28" stroke-dasharray="2 2"/>
+              <line x1="16" y1="2" x2="16" y2="30" style="stroke-width: 2;"/>
+              <rect x="18" y="4" width="11" height="24" fill="none"/>
+            </svg>
+            <span style="font-weight: 600; font-size: 15px;">SideBySide</span>
+          </div>
+          <div style="width: 1px; height: 20px; background: #d4d4cf;"></div>
+          <button class="btn-dashed" style="padding: 6px 12px; font-size: 12px;">📄 base.pdf</button>
+          <span style="color: #8a8a85; font-size: 12px;">vs</span>
+          <button class="btn-dashed" style="padding: 6px 12px; font-size: 12px;">📄 updated.pdf</button>
+          <button class="btn-primary" style="padding: 6px 16px; font-size: 12px; margin-left: auto;">Compare</button>
+        </div>
+        <div class="mini-content">
+          <div class="mini-panel">
+            <div style="font-size: 11px; color: #8a8a85; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Base Document</div>
+            <div style="color: #2d2d2d;">
+              Organizations must maintain <span class="highlight-removed">annual</span> records of all transactions and provide them upon request.
+            </div>
+          </div>
+          <div class="mini-panel">
+            <div style="font-size: 11px; color: #8a8a85; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Compared Document</div>
+            <div style="color: #2d2d2d;">
+              Organizations must maintain <span class="highlight-added">comprehensive digital</span> records of all transactions and provide them upon request.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Favicon -->
+    <div class="section">
+      <div class="section-title">Favicon / App Icon</div>
+      <div class="favicon-grid">
+        <div class="favicon-sample">
+          <div class="favicon-box light">
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none" style="stroke: #2d2d2d; stroke-width: 2;">
+              <rect x="3" y="4" width="11" height="24" fill="none"/>
+              <line x1="16" y1="2" x2="16" y2="30" style="stroke-width: 3;"/>
+              <rect x="18" y="4" width="11" height="24" fill="none"/>
+            </svg>
+          </div>
+          <div class="favicon-label">Light</div>
+        </div>
+        <div class="favicon-sample">
+          <div class="favicon-box dark">
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none" style="stroke: #f5f5f0; stroke-width: 2;">
+              <rect x="3" y="4" width="11" height="24" fill="none"/>
+              <line x1="16" y1="2" x2="16" y2="30" style="stroke-width: 3;"/>
+              <rect x="18" y="4" width="11" height="24" fill="none"/>
+            </svg>
+          </div>
+          <div class="favicon-label">Dark</div>
+        </div>
+        <div class="favicon-sample">
+          <div class="favicon-box" style="background: #c17767;">
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none" style="stroke: white; stroke-width: 2;">
+              <rect x="3" y="4" width="11" height="24" fill="none"/>
+              <line x1="16" y1="2" x2="16" y2="30" style="stroke-width: 3;"/>
+              <rect x="18" y="4" width="11" height="24" fill="none"/>
+            </svg>
+          </div>
+          <div class="favicon-label">Accent</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

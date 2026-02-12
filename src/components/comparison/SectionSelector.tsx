@@ -3,20 +3,20 @@ import type { SectionComparison, SectionMatchStatus } from "@/types/comparison";
 
 const STATUS_CONFIG: Record<SectionMatchStatus, { bg: string; text: string; label: string; indicator: string }> = {
   matched: {
-    bg: "rgba(34, 197, 94, 0.1)",
-    text: "#166534",
+    bg: "var(--color-added-subtle)",
+    text: "var(--color-added)",
     label: "MATCHED SECTION",
     indicator: "var(--color-added)",
   },
   missing_in_base: {
-    bg: "rgba(245, 158, 11, 0.1)",
-    text: "#92400e",
+    bg: "var(--color-changed-subtle)",
+    text: "var(--color-changed)",
     label: "missing in base",
     indicator: "var(--color-changed)",
   },
   missing_in_compared: {
-    bg: "rgba(239, 68, 68, 0.1)",
-    text: "#991b1b",
+    bg: "var(--color-removed-subtle)",
+    text: "var(--color-removed)",
     label: "missing in compared",
     indicator: "var(--color-removed)",
   },
@@ -24,12 +24,12 @@ const STATUS_CONFIG: Record<SectionMatchStatus, { bg: string; text: string; labe
 
 const coverageConfig = (percent: number): { bg: string; text: string } => {
   if (percent >= 99.9) {
-    return { bg: "rgba(34, 197, 94, 0.1)", text: "#166534" };
+    return { bg: "var(--color-added-subtle)", text: "var(--color-added)" };
   }
   if (percent >= 95) {
-    return { bg: "rgba(245, 158, 11, 0.1)", text: "#92400e" };
+    return { bg: "var(--color-changed-subtle)", text: "var(--color-changed)" };
   }
-  return { bg: "rgba(239, 68, 68, 0.1)", text: "#991b1b" };
+  return { bg: "var(--color-removed-subtle)", text: "var(--color-removed)" };
 };
 
 const shortLabel = (value: string): string => {
@@ -70,7 +70,7 @@ export const SectionSelector = ({
                   : "text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-secondary)]"
               )}
               style={{
-                background: selected ? "var(--color-primary)" : "transparent",
+                background: selected ? "var(--color-charcoal)" : "transparent",
               }}
             >
               {shortLabel(section.header)}
@@ -102,18 +102,18 @@ export const SectionSelector = ({
               className={clsx(
                 "w-full rounded-md border p-3 text-left transition",
                 selected
-                  ? "border-[var(--color-primary)]"
+                  ? "border-[var(--color-accent)]"
                   : "border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)]"
               )}
               style={{
-                background: selected ? "var(--color-primary-subtle)" : "transparent",
+                background: selected ? "var(--color-accent-subtle)" : "transparent",
               }}
             >
               <div className="flex items-center justify-between gap-2">
                 <p 
                   className="text-sm font-medium"
                   style={{ 
-                    color: selected ? "var(--color-primary)" : "var(--color-text-primary)" 
+                    color: selected ? "var(--color-accent)" : "var(--color-text-primary)" 
                   }}
                 >
                   {section.header}

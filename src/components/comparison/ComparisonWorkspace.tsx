@@ -46,6 +46,29 @@ const toApiError = (
 
 type LoadingMode = "idle" | "bootstrapping";
 
+// SideBySide Logo Icon Component
+const LogoIcon = ({ className = "" }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 32 32" 
+    fill="none" 
+    className={className}
+    stroke="currentColor"
+    strokeWidth="1.5"
+  >
+    {/* Left half with grid pattern */}
+    <rect x="3" y="4" width="11" height="24" />
+    <line x1="7" y1="4" x2="7" y2="28" strokeDasharray="2 2" />
+    <line x1="11" y1="4" x2="11" y2="28" strokeDasharray="2 2" />
+    <line x1="3" y1="10" x2="14" y2="10" strokeDasharray="2 2" />
+    <line x1="3" y1="16" x2="14" y2="16" strokeDasharray="2 2" />
+    <line x1="3" y1="22" x2="14" y2="22" strokeDasharray="2 2" />
+    {/* Center divider */}
+    <line x1="16" y1="2" x2="16" y2="30" strokeWidth="2" />
+    {/* Right half clean */}
+    <rect x="18" y="4" width="11" height="24" />
+  </svg>
+);
+
 export const ComparisonWorkspace = () => {
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [comparisonId, setComparisonId] = useState<string | null>(null);
@@ -274,21 +297,11 @@ export const ComparisonWorkspace = () => {
         style={{ height: 56 }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div 
-            className="flex h-6 w-6 items-center justify-center rounded-md"
-            style={{ 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-              <rect x="3" y="3" width="8" height="8" rx="1" />
-              <rect x="13" y="3" width="8" height="8" rx="1" />
-              <rect x="3" y="13" width="8" height="8" rx="1" />
-              <rect x="13" y="13" width="8" height="8" rx="1" />
-            </svg>
-          </div>
-          <span className="text-lg font-bold text-[var(--color-text-primary)]">SideBySide</span>
+        <div className="flex items-center gap-2.5">
+          <LogoIcon className="h-5.5 w-5.5 text-[var(--color-charcoal)]" />
+          <span className="text-[17px] font-semibold tracking-[-0.3px] text-[var(--color-charcoal)]">
+            SideBySide
+          </span>
         </div>
 
         {/* Divider */}
@@ -299,7 +312,7 @@ export const ComparisonWorkspace = () => {
           <label
             aria-disabled="true"
             title="Default files are preselected; upload is locked."
-            className="flex cursor-not-allowed items-center gap-2 rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-sm text-[var(--color-text-tertiary)] opacity-90"
+            className="flex cursor-not-allowed items-center gap-2 rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-sm text-[var(--color-text-tertiary)] opacity-90 transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -317,7 +330,7 @@ export const ComparisonWorkspace = () => {
           <label
             aria-disabled="true"
             title="Default files are preselected; upload is locked."
-            className="flex cursor-not-allowed items-center gap-2 rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-sm text-[var(--color-text-tertiary)] opacity-90"
+            className="flex cursor-not-allowed items-center gap-2 rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-sm text-[var(--color-text-tertiary)] opacity-90 transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -334,11 +347,7 @@ export const ComparisonWorkspace = () => {
             type="button"
             disabled
             title="Default files are preselected; manual compare is locked."
-            className="rounded-md px-4 py-1.5 text-sm font-medium text-white transition disabled:cursor-not-allowed"
-            style={{ 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              opacity: 0.5 
-            }}
+            className="rounded-md bg-[var(--color-charcoal)] px-4 py-1.5 text-sm font-medium text-white transition hover:bg-[var(--color-charcoal-light)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Compare
           </button>
@@ -363,7 +372,7 @@ export const ComparisonWorkspace = () => {
             type="button"
             onClick={exportPdf}
             disabled={!comparisonId}
-            className="flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-secondary)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-text-secondary)] transition hover:border-[var(--color-charcoal)] hover:bg-[var(--color-bg-secondary)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -387,12 +396,14 @@ export const ComparisonWorkspace = () => {
           {/* Sidebar Header */}
           <div className="flex items-center justify-between border-b border-[var(--color-border)] p-3">
             {!railCollapsed && (
-              <span className="text-sm font-semibold text-[var(--color-text-primary)]">Sections</span>
+              <span className="text-xs font-semibold uppercase tracking-[1px] text-[var(--color-charcoal)]">
+                Sections
+              </span>
             )}
             <button
               type="button"
               onClick={() => setRailCollapsed((value) => !value)}
-              className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-bg-secondary)] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-tertiary)]"
+              className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-bg-secondary)] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-charcoal)]"
               title={railCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               <svg 
@@ -422,13 +433,9 @@ export const ComparisonWorkspace = () => {
         <main className="flex flex-1 flex-col overflow-hidden">
           {/* Panel Headers */}
           <div className="flex h-[var(--panel-header-height)] shrink-0 border-b border-[var(--color-border)] bg-white">
-            <div className="flex flex-1 items-center gap-3 border-r border-[var(--color-border)] px-5">
+            <div className="flex flex-1 items-center gap-3 border-r border-[var(--color-border)] px-6">
               <span 
-                className="rounded px-2.5 py-1 text-xs font-semibold uppercase tracking-wide"
-                style={{ 
-                  background: 'var(--color-bg-tertiary)', 
-                  color: 'var(--color-text-tertiary)' 
-                }}
+                className="rounded px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.5px] bg-[var(--color-bg-secondary)] text-[var(--color-text-tertiary)]"
               >
                 Base
               </span>
@@ -436,13 +443,9 @@ export const ComparisonWorkspace = () => {
                 {result?.baseFileName ?? "No file compared yet"}
               </span>
             </div>
-            <div className="flex flex-1 items-center gap-3 px-5">
+            <div className="flex flex-1 items-center gap-3 px-6">
               <span 
-                className="rounded px-2.5 py-1 text-xs font-semibold uppercase tracking-wide"
-                style={{ 
-                  background: 'rgba(102, 126, 234, 0.15)', 
-                  color: '#667eea' 
-                }}
+                className="rounded px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.5px] bg-[var(--color-accent-subtle)] text-[var(--color-accent)]"
               >
                 Compared
               </span>
@@ -455,11 +458,7 @@ export const ComparisonWorkspace = () => {
           {/* Coverage Warning */}
           {selectedSection && selectedSection.coverage.percent < 100 ? (
             <div 
-              className="shrink-0 px-5 py-2 text-sm"
-              style={{ 
-                background: 'var(--color-changed-subtle)', 
-                color: 'var(--color-changed-text)' 
-              }}
+              className="shrink-0 px-5 py-2 text-sm bg-[var(--color-changed-subtle)] text-[var(--color-changed-text)]"
             >
               Coverage warning: {selectedSection.coverage.percent.toFixed(1)}% of lines were mapped in this section. 
               Unmapped text is included as synthetic rows and listed in extraction issues.
@@ -473,24 +472,19 @@ export const ComparisonWorkspace = () => {
               <div
                 ref={baseScrollRef}
                 onScroll={onBaseScroll}
-                className="flex-1 overflow-y-auto p-6"
+                className="flex-1 overflow-y-auto p-8"
               >
                 {selectedSection ? (
                   selectedSection.baseSectionTextPreserved ? (
                     <pre 
-                      className="whitespace-pre-wrap break-words font-sans text-sm leading-7"
+                      className="whitespace-pre-wrap break-words font-sans text-[15px] leading-[1.8]"
                       style={{ color: 'var(--color-text-secondary)' }}
                     >
                       {selectedSection.baseSectionTextPreserved}
                     </pre>
                   ) : (
                     <div 
-                      className="rounded-lg border border-dashed p-4 text-sm"
-                      style={{ 
-                        borderColor: 'var(--color-border)', 
-                        background: 'var(--color-bg-secondary)',
-                        color: 'var(--color-text-tertiary)'
-                      }}
+                      className="rounded-lg border border-dashed p-4 text-sm border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-tertiary)]"
                     >
                       This section is missing in the base document.
                     </div>
@@ -506,19 +500,14 @@ export const ComparisonWorkspace = () => {
               <div
                 ref={comparedScrollRef}
                 onScroll={onComparedScroll}
-                className="flex-1 overflow-y-auto p-6"
+                className="flex-1 overflow-y-auto p-8"
               >
                 {selectedSection ? (
                   selectedSection.baseSectionTextPreserved || selectedSection.comparedSectionTextPreserved ? (
                     <RedlineText tokens={sectionTokens} side="compared" />
                   ) : (
                     <div 
-                      className="rounded-lg border border-dashed p-4 text-sm"
-                      style={{ 
-                        borderColor: 'var(--color-border)', 
-                        background: 'var(--color-bg-secondary)',
-                        color: 'var(--color-text-tertiary)'
-                      }}
+                      className="rounded-lg border border-dashed p-4 text-sm border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-tertiary)]"
                     >
                       This section is missing in the compared document.
                     </div>
@@ -535,26 +524,25 @@ export const ComparisonWorkspace = () => {
       {/* Legend */}
       {result && (
         <div 
-          className="fixed bottom-5 left-1/2 flex -translate-x-1/2 gap-5 rounded-lg px-4 py-2.5 text-xs shadow-md"
+          className="fixed bottom-5 left-1/2 flex -translate-x-1/2 gap-5 rounded-lg px-4 py-2.5 text-xs"
           style={{ 
-            background: "rgba(0, 0, 0, 0.65)",
-            border: "1px solid rgba(255, 255, 255, 0.18)",
-            boxShadow: "0 10px 26px rgba(0,0,0,0.35)"
+            background: "var(--color-charcoal)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.12)"
           }}
         >
           <div className="flex items-center gap-2">
             <span 
-              className="h-3 w-3 rounded-sm" 
+              className="h-2.5 w-2.5 rounded-sm" 
               style={{ background: 'var(--color-added)' }}
             />
-            <span style={{ color: 'rgba(255,255,255,0.94)' }}>Added</span>
+            <span className="text-[var(--color-pure-white)]">Added</span>
           </div>
           <div className="flex items-center gap-2">
             <span 
-              className="h-3 w-3 rounded-sm" 
+              className="h-2.5 w-2.5 rounded-sm" 
               style={{ background: 'var(--color-removed)' }}
             />
-            <span style={{ color: 'rgba(255,255,255,0.94)' }}>Removed</span>
+            <span className="text-[var(--color-pure-white)]">Removed</span>
           </div>
         </div>
       )}
@@ -563,18 +551,14 @@ export const ComparisonWorkspace = () => {
       {isBootstrapping ? (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(26, 26, 26, 0.5)', backdropFilter: 'blur(4px)' }}
+          style={{ background: 'rgba(45, 45, 45, 0.5)', backdropFilter: 'blur(4px)' }}
         >
           <div 
             className="w-[min(92vw,480px)] rounded-lg border border-[var(--color-border)] bg-white p-6 shadow-xl"
           >
             <div className="mb-4 flex items-center gap-3">
               <span 
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full"
-                style={{ 
-                  background: 'var(--color-primary-subtle)', 
-                  color: 'var(--color-primary)' 
-                }}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-subtle)] text-[var(--color-accent)]"
               >
                 <span 
                   className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" 
@@ -597,12 +581,7 @@ export const ComparisonWorkspace = () => {
       {/* Error Toast */}
       {error ? (
         <div 
-          className="fixed bottom-5 right-5 max-w-md rounded-lg border px-4 py-3 text-sm shadow-lg"
-          style={{ 
-            background: 'var(--color-removed-bg)', 
-            borderColor: 'var(--color-removed)',
-            color: 'var(--color-removed-text)'
-          }}
+          className="fixed bottom-5 right-5 max-w-md rounded-lg border px-4 py-3 text-sm shadow-lg bg-[var(--color-removed-bg)] border-[var(--color-removed)] text-[var(--color-removed-text)]"
         >
           {error}
         </div>

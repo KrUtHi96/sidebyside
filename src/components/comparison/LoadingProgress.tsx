@@ -47,7 +47,7 @@ export const LoadingProgress = ({
           className="h-full rounded-full transition-[width] duration-150 ease-out"
           style={{ 
             width: `${normalizedPercent}%`,
-            background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)"
+            background: "var(--color-accent)"
           }}
         />
       </div>
