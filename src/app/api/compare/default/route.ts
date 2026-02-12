@@ -13,9 +13,14 @@ import type { ComparisonResult } from "@/types/comparison";
 export const runtime = "nodejs";
 
 const TEMP_ROOT = path.join(os.tmpdir(), "sidebyside-comparisons");
-const DEFAULT_BASE_PDF_PATH =
-  "/Users/kruthi/Downloads/issb-2023-a-ifrs-s2-climate-related-disclosures.pdf";
-const DEFAULT_COMPARED_PDF_PATH = "/Users/kruthi/Downloads/AASBS2_09-24.pdf";
+const DEFAULT_BASE_PDF_PATH = path.join(
+  process.cwd(),
+  "public/samples/ifrs-base.pdf",
+);
+const DEFAULT_COMPARED_PDF_PATH = path.join(
+  process.cwd(),
+  "public/samples/aasb-compared.pdf",
+);
 
 const writeUploadToTempFile = async (
   comparisonId: string,
