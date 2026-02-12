@@ -11,6 +11,7 @@ import {
 import type { ComparisonResult } from "@/types/comparison";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const TEMP_ROOT = path.join(os.tmpdir(), "sidebyside-comparisons");
 
@@ -32,6 +33,30 @@ const asUint8Array = async (file: File): Promise<Uint8Array> => {
   const buffer = await file.arrayBuffer();
   return new Uint8Array(buffer.slice(0));
 };
+
+const methodNotAllowedResponse = () =>
+  NextResponse.json(
+    { error: "Method not allowed. Use POST /api/compare with basePdf and comparePdf files." },
+    {
+      status: 405,
+      headers: { Allow: "POST, OPTIONS" },
+    },
+  );
+
+export async function GET() {
+  return methodNotAllowedResponse();
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      Allow: "POST, OPTIONS",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
 
 export async function POST(request: Request) {
   try {

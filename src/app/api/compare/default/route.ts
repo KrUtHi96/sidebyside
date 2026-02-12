@@ -11,16 +11,11 @@ import {
 import type { ComparisonResult } from "@/types/comparison";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const TEMP_ROOT = path.join(os.tmpdir(), "sidebyside-comparisons");
-const DEFAULT_BASE_PDF_PATH = path.join(
-  process.cwd(),
-  "public/samples/ifrs-base.pdf",
-);
-const DEFAULT_COMPARED_PDF_PATH = path.join(
-  process.cwd(),
-  "public/samples/aasb-compared.pdf",
-);
+const DEFAULT_BASE_PDF_PUBLIC_PATH = "/samples/ifrs-base.pdf";
+const DEFAULT_COMPARED_PDF_PUBLIC_PATH = "/samples/aasb-compared.pdf";
 
 const writeUploadToTempFile = async (
   comparisonId: string,
@@ -36,23 +31,43 @@ const writeUploadToTempFile = async (
   return filePath;
 };
 
-const readDefaultPdf = async (filePath: string): Promise<Uint8Array> => {
+const readDefaultPdf = async (
+  request: Request,
+  publicPath: string,
+): Promise<Uint8Array> => {
+  const filePath = path.join(process.cwd(), "public", publicPath.replace(/^\//, ""));
+
   try {
     const data = await fs.readFile(filePath);
     return new Uint8Array(data);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
-      throw new Error(`Default PDF not found at path: ${filePath}`);
+  } catch (localReadError) {
+    try {
+      const fileUrl = new URL(publicPath, request.url);
+      const response = await fetch(fileUrl, {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Default PDF fetch failed (${response.status}) at ${fileUrl.pathname}`);
+      }
+
+      const data = await response.arrayBuffer();
+      return new Uint8Array(data.slice(0));
+    } catch {
+      if ((localReadError as NodeJS.ErrnoException)?.code === "ENOENT") {
+        throw new Error(`Default PDF not found at path: ${publicPath}`);
+      }
+
+      throw new Error(`Unable to read default PDF at path: ${publicPath}`);
     }
-    throw new Error(`Unable to read default PDF at path: ${filePath}`);
   }
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const [baseBuffer, comparedBuffer] = await Promise.all([
-      readDefaultPdf(DEFAULT_BASE_PDF_PATH),
-      readDefaultPdf(DEFAULT_COMPARED_PDF_PATH),
+      readDefaultPdf(request, DEFAULT_BASE_PDF_PUBLIC_PATH),
+      readDefaultPdf(request, DEFAULT_COMPARED_PDF_PUBLIC_PATH),
     ]);
 
     const [baseExtracted, comparedExtracted] = await Promise.all([
@@ -74,8 +89,8 @@ export async function GET() {
     const comparison: ComparisonResult = {
       id: comparisonId,
       renderMode: "exact_pdf",
-      baseFileName: path.basename(DEFAULT_BASE_PDF_PATH),
-      comparedFileName: path.basename(DEFAULT_COMPARED_PDF_PATH),
+      baseFileName: path.basename(DEFAULT_BASE_PDF_PUBLIC_PATH),
+      comparedFileName: path.basename(DEFAULT_COMPARED_PDF_PUBLIC_PATH),
       expiresAt: new Date(expiresAtMs).toISOString(),
       sections,
       sectionPageMap,
@@ -93,13 +108,13 @@ export async function GET() {
       writeUploadToTempFile(
         comparisonId,
         "base",
-        path.basename(DEFAULT_BASE_PDF_PATH),
+        path.basename(DEFAULT_BASE_PDF_PUBLIC_PATH),
         baseBuffer,
       ),
       writeUploadToTempFile(
         comparisonId,
         "compared",
-        path.basename(DEFAULT_COMPARED_PDF_PATH),
+        path.basename(DEFAULT_COMPARED_PDF_PUBLIC_PATH),
         comparedBuffer,
       ),
     ]);
