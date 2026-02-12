@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import clsx from "clsx";
 import { LoadingProgress } from "@/components/comparison/LoadingProgress";
 import { RedlineText } from "@/components/comparison/RedlineText";
 import { SectionSelector } from "@/components/comparison/SectionSelector";

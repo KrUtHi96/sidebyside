@@ -5,7 +5,7 @@ const STATUS_CONFIG: Record<SectionMatchStatus, { bg: string; text: string; labe
   matched: {
     bg: "rgba(34, 197, 94, 0.1)",
     text: "#166534",
-    label: "matched",
+    label: "Matched Sections",
     indicator: "var(--color-added)",
   },
   missing_in_base: {
@@ -122,7 +122,7 @@ export const SectionSelector = ({
 
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <span
-                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
                   style={{
                     background: status.bg,
                     color: status.text,
@@ -137,7 +137,7 @@ export const SectionSelector = ({
                     color: coverage.text,
                   }}
                 >
-                  {section.coverage.percent.toFixed(0)}%
+                  {section.coverage.percent.toFixed(0)}% Coverage
                 </span>
               </div>
 
