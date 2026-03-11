@@ -443,6 +443,10 @@ export const buildSectionComparisons = (
       ),
       rows: buildRowsForSection(baseClauses, comparedClauses),
       coverage: mergeCoverage(base?.coverage, compared?.coverage),
+      coverageBySide: {
+        base: base?.coverage ?? emptyCoverage(),
+        compared: compared?.coverage ?? emptyCoverage(),
+      },
       startParagraph: base?.startParagraph ?? compared?.startParagraph,
       endParagraph: base?.endParagraph ?? compared?.endParagraph,
     } satisfies SectionComparison;

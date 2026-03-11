@@ -1,9 +1,12 @@
 import type {
   ClauseNode,
+  ExtractionProcessing,
+  ExtractionQuality,
   ExtractedDocument,
   ExtractedSection,
   ParagraphRecord,
 } from "@/types/comparison";
+import { runOcrFallback, type OcrPageText } from "@/lib/pdf/ocrFallback";
 import { normalizeParagraphKey } from "@/lib/utils/paragraphKey";
 
 type PositionedText = {
@@ -21,6 +24,11 @@ type PageLine = {
   y: number;
   height: number;
   pageHeight: number;
+};
+
+export type ExtractDocumentStructureOptions = {
+  enableOcrFallback?: boolean;
+  ocrLanguage?: string;
 };
 
 const SECTION_HEADERS = [
@@ -56,6 +64,7 @@ const PARAGRAPH_GAP_MULTIPLIER = 1.55;
 const SUPERSCRIPT_HEIGHT_RATIO = 0.82;
 const SUPERSCRIPT_MAX_Y_DELTA = 9;
 const SUPERSCRIPT_MAX_LENGTH = 2;
+const OCR_SCORE_IMPROVEMENT_THRESHOLD = 0.1;
 
 const SUPERSCRIPT_CHAR_MAP: Record<string, string> = {
   "0": "⁰",
@@ -814,6 +823,58 @@ const attachSuperscripts = (lines: PageLine[]): PageLine[] => {
   return mutable.filter((_, index) => !skipIndices.has(index));
 };
 
+const computeExtractionQuality = (lines: PageLine[]): ExtractionQuality => {
+  const joined = lines.map((line) => line.text).join("\n");
+  const visibleChars = joined.replace(/\s+/g, "").length;
+  const alnumChars = (joined.match(/[\p{L}\p{N}]/gu) ?? []).length;
+  const symbolChars = (joined.match(/[^\s\p{L}\p{N}]/gu) ?? []).length;
+  const wordCount =
+    joined.trim().length > 0 ? joined.trim().split(/\s+/).filter(Boolean).length : 0;
+  const alnumRatio = visibleChars === 0 ? 0 : alnumChars / visibleChars;
+  const symbolRatio = visibleChars === 0 ? 0 : symbolChars / visibleChars;
+
+  return {
+    visibleChars,
+    alnumRatio: Math.round(alnumRatio * 1000) / 1000,
+    symbolRatio: Math.round(symbolRatio * 1000) / 1000,
+    wordCount,
+    poor:
+      visibleChars < 120 ||
+      alnumRatio < 0.25 ||
+      (wordCount < 30 && symbolRatio > 0.2),
+  };
+};
+
+const extractionQualityScore = (quality: ExtractionQuality): number =>
+  quality.alnumRatio - quality.symbolRatio + Math.min(1, quality.wordCount / 200);
+
+const buildLinesFromOcrPages = (pages: OcrPageText[]): PageLine[] => {
+  const sortedPages = [...pages].sort((left, right) => left.page - right.page);
+  const lines: PageLine[] = [];
+
+  for (const page of sortedPages) {
+    const rawLines = page.text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    let y = 960;
+    for (const rawLine of rawLines) {
+      lines.push({
+        page: page.page,
+        text: rawLine,
+        x: 72,
+        y,
+        height: 12,
+        pageHeight: 1000,
+      });
+      y -= 16;
+    }
+  }
+
+  return lines;
+};
+
 type ParsedSectionResult = {
   clauses: ClauseNode[];
   coverage: ExtractedSection["coverage"];
@@ -879,6 +940,7 @@ const parseSectionClauses = (
       toIssueRecord(
         side,
         `${sectionHeader}-unmatched-${unmatchedIndex}`,
+        sectionHeader,
         syntheticClause.textPreserved,
         syntheticClause.pageStart,
         "unmatched",
@@ -1128,12 +1190,14 @@ const parseSectionClauses = (
 const toIssueRecord = (
   side: "base" | "compared",
   key: string,
+  sectionHeader: string | undefined,
   text: string,
   page: number,
   flag: ParagraphRecord["extractionFlags"][number],
 ): ParagraphRecord => ({
   key: `${side}-${key}-${flag}`,
   originalLabel: key,
+  sectionHeader,
   text,
   pageStart: page,
   pageEnd: page,
@@ -1164,6 +1228,7 @@ const detectDuplicateClauseIssues = (
         toIssueRecord(
           side,
           `${section.header}-${clauseId}`,
+          section.header,
           clause.textPreserved,
           clause.pageStart,
           "duplicate",
@@ -1243,16 +1308,72 @@ const extractSections = (
 export const extractDocumentStructure = async (
   buffer: Uint8Array,
   side: "base" | "compared",
+  options: ExtractDocumentStructureOptions = {},
 ): Promise<ExtractedDocument> => {
-  const lines = attachSuperscripts(filterFooterLines(await extractLines(buffer)));
-  const extracted = extractSections(lines, side);
+  const ocrBuffer = options.enableOcrFallback ? new Uint8Array(buffer) : null;
 
-  const duplicateIssues = extracted.sections.flatMap((section) =>
-    detectDuplicateClauseIssues(side, section),
-  );
+  const toDocument = (
+    lines: PageLine[],
+    processing: ExtractionProcessing,
+  ): ExtractedDocument => {
+    const extracted = extractSections(lines, side);
+    const duplicateIssues = extracted.sections.flatMap((section) =>
+      detectDuplicateClauseIssues(side, section),
+    );
 
-  return {
-    sections: extracted.sections,
-    issues: [...extracted.issues, ...duplicateIssues],
+    return {
+      sections: extracted.sections,
+      issues: [...extracted.issues, ...duplicateIssues],
+      processing,
+    };
   };
+
+  const pdfTextLines = attachSuperscripts(filterFooterLines(await extractLines(buffer)));
+  const pdfQuality = computeExtractionQuality(pdfTextLines);
+  const processing: ExtractionProcessing = {
+    mode: "pdf_text",
+    ocrAttempted: false,
+    ocrUsed: false,
+    warnings: [],
+    quality: pdfQuality,
+  };
+  const pdfTextDocument = toDocument(pdfTextLines, processing);
+
+  if (!options.enableOcrFallback || !pdfQuality.poor) {
+    return pdfTextDocument;
+  }
+
+  processing.ocrAttempted = true;
+  processing.ocrReason = "low_text_quality";
+
+  try {
+    const ocrResult = await runOcrFallback(ocrBuffer ?? buffer, options.ocrLanguage ?? "eng");
+    processing.warnings.push(...ocrResult.warnings);
+
+    if (!ocrResult.available || ocrResult.pages.length === 0) {
+      return pdfTextDocument;
+    }
+
+    const ocrLines = attachSuperscripts(filterFooterLines(buildLinesFromOcrPages(ocrResult.pages)));
+    const ocrQuality = computeExtractionQuality(ocrLines);
+    const scoreDelta = extractionQualityScore(ocrQuality) - extractionQualityScore(pdfQuality);
+
+    if (scoreDelta >= OCR_SCORE_IMPROVEMENT_THRESHOLD) {
+      const ocrProcessing: ExtractionProcessing = {
+        ...processing,
+        mode: "ocr",
+        ocrUsed: true,
+        quality: ocrQuality,
+      };
+      return toDocument(ocrLines, ocrProcessing);
+    }
+
+    processing.warnings.push("OCR attempted but did not improve extraction quality.");
+    return pdfTextDocument;
+  } catch (error) {
+    processing.warnings.push(
+      `OCR fallback failed: ${error instanceof Error ? error.message : "Unknown OCR failure."}`,
+    );
+    return pdfTextDocument;
+  }
 };

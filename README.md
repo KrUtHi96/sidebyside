@@ -38,8 +38,12 @@ Open: [http://localhost:3000](http://localhost:3000)
 
 ## Notes
 
-- v1 supports text-based PDFs (no OCR).
 - Comparison results are in-memory only for current runtime.
+- Upload comparisons (`POST /api/compare`) now auto-attempt OCR fallback when text extraction quality is poor.
+- OCR fallback requires local binaries on the host:
+  - macOS: `brew install poppler tesseract`
+  - Ubuntu/Debian: `sudo apt-get install -y poppler-utils tesseract-ocr`
+- Default sample comparison route (`GET /api/compare/default`) continues using native PDF text extraction only.
 
 ## Vercel deployment notes
 

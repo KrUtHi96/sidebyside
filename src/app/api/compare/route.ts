@@ -11,7 +11,7 @@ import type { ComparisonResult } from "@/types/comparison";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 180;
 
 const TEMP_ROOT = path.join(os.tmpdir(), "sidebyside-comparisons");
 
@@ -82,8 +82,14 @@ export async function POST(request: Request) {
     const compareBuffer = await asUint8Array(comparePdf);
 
     const [baseExtracted, comparedExtracted] = await Promise.all([
-      extractDocumentStructure(baseBuffer.slice(), "base"),
-      extractDocumentStructure(compareBuffer.slice(), "compared"),
+      extractDocumentStructure(baseBuffer.slice(), "base", {
+        enableOcrFallback: true,
+        ocrLanguage: "eng",
+      }),
+      extractDocumentStructure(compareBuffer.slice(), "compared", {
+        enableOcrFallback: true,
+        ocrLanguage: "eng",
+      }),
     ]);
 
     const comparisonId = crypto.randomUUID();
@@ -112,6 +118,14 @@ export async function POST(request: Request) {
         base: baseExtracted.issues,
         compared: comparedExtracted.issues,
       },
+      processing: {
+        base: baseExtracted.processing,
+        compared: comparedExtracted.processing,
+        warnings: [...new Set([
+          ...baseExtracted.processing.warnings,
+          ...comparedExtracted.processing.warnings,
+        ])],
+      },
       generatedAt: new Date().toISOString(),
     };
 
@@ -133,6 +147,8 @@ export async function POST(request: Request) {
       summary: {
         totalRows: comparison.rows.length,
         sections: comparison.sections.length,
+        ocrFallbackUsed:
+          baseExtracted.processing.ocrUsed || comparedExtracted.processing.ocrUsed,
         extractionIssues:
           comparison.extractionIssues.base.length +
           comparison.extractionIssues.compared.length,

@@ -2,9 +2,33 @@ export type DiffGranularity = "word" | "sentence" | "paragraph";
 
 export type ExtractionFlag = "duplicate" | "malformed" | "unextractable" | "unmatched";
 
+export type ExtractionQuality = {
+  visibleChars: number;
+  alnumRatio: number;
+  symbolRatio: number;
+  wordCount: number;
+  poor: boolean;
+};
+
+export type ExtractionProcessing = {
+  mode: "pdf_text" | "ocr";
+  ocrAttempted: boolean;
+  ocrUsed: boolean;
+  ocrReason?: "low_text_quality";
+  warnings: string[];
+  quality: ExtractionQuality;
+};
+
+export type ComparisonProcessing = {
+  base: ExtractionProcessing;
+  compared: ExtractionProcessing;
+  warnings: string[];
+};
+
 export type ParagraphRecord = {
   key: string;
   originalLabel: string;
+  sectionHeader?: string;
   text: string;
   pageStart: number;
   pageEnd: number;
@@ -113,6 +137,10 @@ export type SectionComparison = {
   sectionDiffParagraph: DiffToken[];
   rows: ComparisonRow[];
   coverage: SectionCoverage;
+  coverageBySide: {
+    base: SectionCoverage;
+    compared: SectionCoverage;
+  };
   startParagraph?: string;
   endParagraph?: string;
 };
@@ -132,6 +160,7 @@ export type ComparisonResult = {
     base: ParagraphRecord[];
     compared: ParagraphRecord[];
   };
+  processing?: ComparisonProcessing;
   generatedAt: string;
 };
 
@@ -147,4 +176,5 @@ export type ExtractedSection = {
 export type ExtractedDocument = {
   sections: ExtractedSection[];
   issues: ParagraphRecord[];
+  processing: ExtractionProcessing;
 };

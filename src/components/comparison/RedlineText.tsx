@@ -9,7 +9,7 @@ export const RedlineText = ({
 }) => {
   return (
     <pre 
-      className="whitespace-pre-wrap break-words font-sans text-sm leading-7"
+      className="whitespace-pre-wrap break-words font-sans text-[15px] leading-[1.9] tracking-[0.005em]"
       style={{ color: "var(--color-text-secondary)" }}
     >
       {tokens.map((token, index) => {
@@ -28,8 +28,8 @@ export const RedlineText = ({
                 color: "var(--color-removed-text)",
                 textDecoration: "line-through",
                 textDecorationThickness: "2px",
-                padding: "1px 2px",
-                borderRadius: "2px",
+                padding: "1px 3px",
+                borderRadius: "3px",
               }}
             >
               {token.value}
@@ -45,9 +45,9 @@ export const RedlineText = ({
               style={{
                 background: "var(--color-added-bg)",
                 color: "var(--color-added-text)",
-                fontWeight: 500,
-                padding: "1px 2px",
-                borderRadius: "2px",
+                fontWeight: 600,
+                padding: "1px 3px",
+                borderRadius: "3px",
               }}
             >
               {token.value}

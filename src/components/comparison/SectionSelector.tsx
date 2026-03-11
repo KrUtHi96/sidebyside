@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { SectionComparison, SectionMatchStatus, DiffToken } from "@/types/comparison";
+import type { SectionComparison, DiffToken } from "@/types/comparison";
 
 // Calculate word counts from diff tokens
 const calculateWordStats = (tokens: DiffToken[]): { added: number; removed: number } => {
@@ -41,6 +41,7 @@ export const SectionSelector = ({
       <div className="flex flex-col gap-1 p-2">
         {sections.map((section) => {
           const selected = section.header === selectedHeader;
+          const displayHeader = section.header;
           const wordStats = calculateWordStats(section.sectionDiffWord);
           const hasChanges = wordStats.added > 0 || wordStats.removed > 0;
           
@@ -48,7 +49,7 @@ export const SectionSelector = ({
             <button
               key={`section-compact-${section.header}`}
               type="button"
-              title={section.header}
+              title={displayHeader}
               onClick={() => onSelect(section.header)}
               className={clsx(
                 "relative mx-auto flex h-9 w-9 items-center justify-center rounded-md text-[11px] font-semibold transition",
@@ -60,7 +61,7 @@ export const SectionSelector = ({
                 background: selected ? "var(--color-charcoal)" : "transparent",
               }}
             >
-              {shortLabel(section.header)}
+              {shortLabel(displayHeader)}
               {/* Change indicator dot */}
               {hasChanges && (
                 <span 
@@ -84,6 +85,7 @@ export const SectionSelector = ({
       <div className="flex flex-col gap-1">
         {sections.map((section) => {
           const selected = section.header === selectedHeader;
+          const displayHeader = section.header;
           const wordStats = calculateWordStats(section.sectionDiffWord);
           const hasChanges = wordStats.added > 0 || wordStats.removed > 0;
 
@@ -109,7 +111,7 @@ export const SectionSelector = ({
                   color: selected ? "var(--color-accent)" : "var(--color-text-primary)" 
                 }}
               >
-                {section.header}
+                {displayHeader}
               </p>
 
               {/* Right: Word stats */}
